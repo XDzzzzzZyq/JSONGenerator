@@ -1,7 +1,7 @@
 import pandas as pd
-import numpy as np
 import os
 import json
+import numpy as np
 
 
 def read_json(json_file_path: str):
@@ -63,6 +63,9 @@ def parse_links(template, columns: pd.Index):
 def update_json(tar, path: list[str], value: any):
     """Update JSON dictionnary PATH with VALUE. Return updated JSON"""
 
+    if path is None:
+        return tar
+
     if type(value) is np.int64:
         value = int(value)
 
@@ -81,7 +84,6 @@ def write_json(json_obj: dict, json_file_path: str):
 
     with open(json_file_path, 'w') as json_file:
         json.dump(json_obj, json_file, indent=4)
-
 
 
 if __name__ == "__main__":

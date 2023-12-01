@@ -58,6 +58,7 @@ class JSONGenerator:
 
             for link_name, link in self.links.items():
                 # code = f"{link} = \'{data[link_name]}\'"
+                print(link)
                 raw = IO.update_json(raw, link, data[link_name])
 
             self.buffer[i] = raw
@@ -80,11 +81,17 @@ class JSONGenerator:
     def pick_preview(self, index: int, indent: int = 4) -> str:
         return str(json.dumps(self.buffer[index], indent=indent))
 
+    def search(self, path: str, value: any) -> int:
+        for i in range(self.data_size):
+            if self.buffer[path] is value:
+                return i
+        return -1
+
 
 if __name__ == "__main__":
     generator = JSONGenerator()
-    generator.import_template("../example/002.json")
-    generator.import_dataset("../example/test.xlsx")
+    generator.import_template("../example/003.json")
+    generator.import_dataset("../example/test2.xlsx")
 
     generator.generate_json()
     generator.export_json("../example/result/")
