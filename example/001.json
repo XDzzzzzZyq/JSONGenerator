@@ -1,0 +1,39 @@
+{
+  "identifier": "Policy001",
+  "name": "Support the development",
+  "description": "The government gives great incentives for mahogany cutting and shipping overseas, trying to boost the region's economy through this industry.",
+  "field": "test",
+  "subfield": "test1",
+  "cost": 7,
+  "lasting": 1,
+  "consequence": "Add_NR_5",
+  "disclosureProb": null,
+  "preRequirements": [
+    {
+      "event": [ "Event001" ],
+      "consequence":[],
+      "tech": [],
+      "policy": [],
+      "round": [ 0, 999 ],
+      "nationalGeo":,
+      "nationalIndicator": {
+        "EPI": {
+          "air": [ -999, 999 ],
+          "water": [ -999, 999 ],
+          "forest": [ -999, 999 ],
+          "agriculture": [ -999, 999 ],
+          "fishery": [ -999, 999 ],
+          "climate": [ -999, 999 ],
+          "energy": [ -999, 999 ],
+          "biodiversity": [ -999, 999 ]
+        },
+        "nationalResources": [ -999, 999 ],
+        "publicSatisfaction": [ -999, 999 ],
+        "diplomaticReputation": [ -999, 999 ],
+        "neighbour": {
+          "event": null
+        }
+      }
+    }
+  ]
+}

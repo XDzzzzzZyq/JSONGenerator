@@ -1,0 +1,15 @@
+{
+  "identifier" : "ide",
+  "name" : "name",
+  "description" : "descr",
+  "field" : "field",
+  "subfield" : "subfield",
+  "cost" : "cost",
+  "lasting" : "lasting",
+  "consequence" : "conseq",
+  "disclosureProb" : "discl",
+  "address": {
+     "city": "city",
+     "zipcode": "code"
+  }
+}
