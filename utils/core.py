@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 # import jsonpath_ng
 # from objectpath import Tree
@@ -41,13 +43,12 @@ class JSONGenerator:
         for column in self.data_columns:
             self.option_list[column] = PS.Options()
 
-    def generate_json(self, target_dir: str, g_range: tuple[int, int] = None):
+        self.buffer = [dict() for _ in range(self.data_size)]
+
+    def generate_json(self, g_range: tuple[int, int] = None):
+
         if g_range is None:
             g_range = (0, self.data_size)
-
-        if target_dir[-1] != '/':
-            target_dir += '/'
-        self.preference.export_folder = target_dir
 
         self.dataset = PS.process(self.dataset, self.option_list)
 
@@ -59,10 +60,25 @@ class JSONGenerator:
                 # code = f"{link} = \'{data[link_name]}\'"
                 raw = IO.update_json(raw, link, data[link_name])
 
-            IO.write_json(raw, f"{target_dir}{i}.json")
+            self.buffer[i] = raw
 
-        print(f"total count: {g_range[1]-g_range[0]}")
+    def export_json(self, target_dir: str, g_range: tuple[int, int] = None):
+
+        if g_range is None:
+            g_range = (0, self.data_size)
+
+        if target_dir[-1] != '/':
+            target_dir += '/'
+        self.preference.export_folder = target_dir
+
+        for i in range(*g_range):
+            IO.write_json(self.buffer[i], f"{target_dir}{i}.json")
+
+        print(f"total count: {g_range[1] - g_range[0]}")
         print(f"to folder: {target_dir}")
+
+    def pick_preview(self, index: int) -> str:
+        return str(json.dumps(self.buffer[index]))
 
 
 if __name__ == "__main__":
@@ -70,4 +86,6 @@ if __name__ == "__main__":
     generator.import_template("../example/002.json")
     generator.import_dataset("../example/test.xlsx")
 
-    generator.generate_json("../example/result/")
+    generator.generate_json()
+    generator.export_json("../example/result/")
+    print(generator.pick_preview(0))
