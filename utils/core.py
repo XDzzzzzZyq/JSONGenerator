@@ -77,8 +77,8 @@ class JSONGenerator:
         print(f"total count: {g_range[1] - g_range[0]}")
         print(f"to folder: {target_dir}")
 
-    def pick_preview(self, index: int) -> str:
-        return str(json.dumps(self.buffer[index]))
+    def pick_preview(self, index: int, indent: int = 4) -> str:
+        return str(json.dumps(self.buffer[index], indent=indent))
 
 
 if __name__ == "__main__":
