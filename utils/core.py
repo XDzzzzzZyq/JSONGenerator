@@ -24,6 +24,7 @@ class JSONGenerator:
         self.links: dict = None
         self.preference = Preference()
         self.option_list = dict()
+        self.buffer = []
 
     def import_template(self, template_dir: str):
         self.template = IO.read_json(template_dir)
@@ -49,6 +50,10 @@ class JSONGenerator:
 
         if g_range is None:
             g_range = (0, self.data_size)
+        elif g_range[0] < 0:
+            g_range = (0, g_range[1])
+        elif g_range[1] > len(self.buffer):
+            g_range = (g_range[0], len(self.buffer))
 
         self.dataset = PS.process(self.dataset, self.option_list)
 
@@ -72,13 +77,14 @@ class JSONGenerator:
         self.preference.export_folder = target_dir
 
         for i in range(*g_range):
-            IO.write_json(self.buffer[i], f"{target_dir}{i}.json")
+            if(self.buffer[i] != {}):
+                IO.write_json(self.buffer[i], f"{target_dir}{i}.json")
 
         print(f"total count: {g_range[1] - g_range[0]}")
         print(f"to folder: {target_dir}")
 
     def pick_preview(self, index: int) -> str:
-        return str(json.dumps(self.buffer[index]))
+        return str(json.dumps(self.buffer[index], indent=4))
 
 
 if __name__ == "__main__":

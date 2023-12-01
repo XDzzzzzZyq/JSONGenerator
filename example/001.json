@@ -15,7 +15,7 @@
       "tech": [],
       "policy": [],
       "round": [ 0, 999 ],
-      "nationalGeo":,
+      "nationalGeo": null,
       "nationalIndicator": {
         "EPI": {
           "air": [ -999, 999 ],
