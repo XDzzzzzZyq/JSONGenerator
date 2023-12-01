@@ -3,10 +3,13 @@ import pandas as pd
 # from objectpath import Tree
 
 import utils.fileIO as IO
+import utils.process as PS
 
 
 class Preference:
     def __init__(self):
+        self.template_dir: str = None
+        self.dataset_dir: str = None
         self.export_folder: str = None
 
 
@@ -18,18 +21,25 @@ class JSONGenerator:
         self.data_columns: pd.Index = None
         self.links: dict = None
         self.preference = Preference()
+        self.option_list = dict()
 
     def import_template(self, template_dir: str):
         self.template = IO.read_json(template_dir)
+        self.preference.template_dir = template_dir
 
         if self.dataset is not None:
             self.links = IO.parse_links(self.template, self.data_columns)
 
     def import_dataset(self, excel_dir: str):
         self.dataset, self.data_columns, self.data_size = IO.read_excel(excel_dir)
+        self.preference.dataset_dir = excel_dir
 
         if self.template is not None:
             self.links = IO.parse_links(self.template, self.data_columns)
+
+        # column-wise data pre-processing
+        for column in self.data_columns:
+            self.option_list[column] = PS.Options()
 
     def generate_json(self, target_dir: str, g_range: tuple[int, int] = None):
         if g_range is None:
@@ -37,6 +47,9 @@ class JSONGenerator:
 
         if target_dir[-1] != '/':
             target_dir += '/'
+        self.preference.export_folder = target_dir
+
+        self.dataset = PS.process(self.dataset, self.option_list)
 
         for i in range(*g_range):
             data = self.dataset.iloc[i]
