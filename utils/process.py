@@ -8,10 +8,25 @@ class Options:
         self.remove_ext_name = False
         self.number_to_string = False
         self.string_to_number = False
-        self.expression: str = None # e.g. 'str(x)+".png"'
+        self.expression: str = None  # e.g. 'str(x)+".png"'
+
+
+def process_value(value: any):
+    if type(value) is str:
+        if value.startswith('[') and value.endswith(']'):  # e.g. [0,100]
+            value_r = value.replace(' ', '').replace(']', '').replace('[', '').split(",")
+            if len(value_r) == 2:
+                value = [float(v) for v in value_r]
+
+        elif value.startswith('l[') and value.endswith(']'):  # e.g. l["123", "asda", "12313"]
+            value = value.replace(' ', '').replace(']', '').replace('l[', '').replace('\"', '').split(",")
+
+    return value
 
 
 def process_column(datacol: pd.DataFrame, opt: Options) -> pd.DataFrame:
+    datacol = datacol.apply(process_value)
+
     if opt.remove_spaces:
         datacol = datacol.astype(str).str.strip()
 
