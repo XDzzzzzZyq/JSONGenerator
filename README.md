@@ -4,4 +4,4 @@
 ### Dependencies
 - pandas
 - json
-- jsonpath-ng
+- objectpath

@@ -1,5 +1,5 @@
 import pandas as pd
-from jsonpath_ng import jsonpath, parse
+import numpy as np
 import os
 import json
 
@@ -19,7 +19,7 @@ def read_json(json_file_path: str):
 
 
 def read_excel(excel_file_path: str):
-    loaded_excel = pd.read_excel(excel_file_path)
+    loaded_excel = pd.read_excel(excel_file_path).dropna(axis=1, how='all')
 
     return loaded_excel, loaded_excel.columns, len(loaded_excel)
 
@@ -55,9 +55,23 @@ def parse_links(template, columns: pd.Index):
     links = dict()
 
     for column in columns:
-        links[column] = to_str_path(find_path(template, column))
+        links[column] = find_path(template, column)
 
     return links
+
+
+def update_json(tar, path: list[str], value: any):
+    """Update JSON dictionnary PATH with VALUE. Return updated JSON"""
+
+    if type(value) is np.int64:
+        value = int(value)
+
+    if len(path) == 0:  # the last position
+        return value
+
+    tar[path[0]] = update_json(tar[path[0]], path[1:], value)
+
+    return tar
 
 
 def write_json(json_obj: dict, json_file_path: str):
@@ -67,6 +81,7 @@ def write_json(json_obj: dict, json_file_path: str):
 
     with open(json_file_path, 'w') as json_file:
         json.dump(json_obj, json_file, indent=4)
+
 
 
 if __name__ == "__main__":
