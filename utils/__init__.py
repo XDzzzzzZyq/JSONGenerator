@@ -1,2 +1,2 @@
-from core import *
-from fileIO import *
+from utils.core import *
+from utils.fileIO import *

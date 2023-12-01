@@ -3,6 +3,13 @@ from tkinter import scrolledtext
 from tkinter import filedialog
 import tkinter as tk
 
+
+def select_file_path(file_name: str, file_type: str, entry: tk.Entry):
+    path = filedialog.askopenfilename(filetypes=[(file_name, file_type)])
+    entry.insert(0, path)
+    entry.pack()
+
+
 class Panel:
     def __init__(self, width:int, height:int):
         self.width = width
@@ -11,6 +18,9 @@ class Panel:
         self.excel_path = None
         self.json_template_path = None
         self.preview_area = None
+
+    def set_generator_instance(self, generator: JSONGenerator):
+        self.generator = generator
 
     def run(self):
         self.create_panel()
@@ -30,7 +40,7 @@ class Panel:
         excel_label.pack()
         self.excel_path = tk.Entry(self.window, width=int(self.width/20))
         self.excel_path.pack()
-        button = tk.Button(self.window, text="Select File", command=lambda: self.select_file_path("Excel File: ", "*.xlsx", self.excel_path))
+        button = tk.Button(self.window, text="Select File", command=self.select_excel_path)
         button.pack()
 
         # Json Template Input
@@ -38,7 +48,7 @@ class Panel:
         json_template_label.pack()
         self.json_template_path = tk.Entry(self.window, width=int(self.width/20))
         self.json_template_path.pack()
-        button = tk.Button(self.window, text="Select File", command=lambda: self.select_file_path("Json Template File: ", "*.json", self.excel_path))
+        button = tk.Button(self.window, text="Select File", command=self.select_template_path)
         button.pack()
         
         # Empty Line1
@@ -62,14 +72,17 @@ class Panel:
         # Write In Json File
         write_json = tk.Button(self.window, text="Write Into File", command=self.write_in_json)
         write_json.pack()
-        
-    def select_file_path(self,file_name: str, file_type: str, entry: tk.Entry):
-        path = filedialog.askopenfilename(filetypes=[(file_name, file_type)])
-        entry.insert(0, path)
-        entry.pack()
+
+    def select_excel_path(self):
+        select_file_path("Excel File: ", "*.xlsx", self.excel_path)
+        self.generator.import_dataset(self.excel_path.get())
+
+    def select_template_path(self):
+        select_file_path("Json Template File: ", "*.json", self.json_template_path)
+        self.generator.import_template(self.json_template_path.get())
     
     def transform_to_json(self):
-        pass
+        self.generator.generate_json("example/result/")
                           
     def write_in_json(self):
         pass
