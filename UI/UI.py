@@ -100,6 +100,7 @@ class Panel:
     
     def transform_to_json(self):
         row_range = None
+        
         try:
             row_range = (int(self.start_entry.get()) - 2, int(self.end_entry.get()) - 1)
         except:
@@ -118,11 +119,17 @@ class Panel:
                           
     def write_in_json(self):
         target_dir = self.export_path.get()
+        row_range = None
         
         if(self.generator.buffer == [] or target_dir == ''):
             return
+         
+        try:
+            row_range = (int(self.start_entry.get()) - 2, int(self.end_entry.get()) - 1)
+        except:
+            print("Enter correct range!")
         
-        self.generator.export_json(target_dir)
+        self.generator.export_json(target_dir, g_range=row_range)
         self.preview_area.delete("1.0", tk.END)
         
 
