@@ -43,7 +43,7 @@ class Panel:
         # Excel Input
         excel_label = tk.Label(self.window, text="\nExcel Path:")
         excel_label.pack()
-        self.excel_path = tk.Entry(self.window, width=int(self.width/20))
+        self.excel_path = tk.Entry(self.window, width=int(self.width/40))
         self.excel_path.pack()
         button1 = tk.Button(self.window, text="Select File", command=lambda: select_file_path(self.excel_path, "Excel File: ", "*.xlsx"))
         button1.pack()
@@ -79,7 +79,7 @@ class Panel:
         # Scrolled Preview
         preview_label = tk.Label(self.window, text="\nPreview:")
         preview_label.pack()
-        self.preview_area = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, width=int(self.width/12), height=int(self.height/50))
+        self.preview_area = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, width=int(self.width/12), height=int(self.height/80))
         self.preview_area.pack()
         
         # Json File Output
@@ -103,9 +103,14 @@ class Panel:
         
         try:
             row_range = (int(self.start_entry.get()) - 2, int(self.end_entry.get()) - 1)
+            if row_range[0] < 0:
+                row_range = (0, row_range[1])
+            elif row_range[1] > self.generator.data_size:
+                row_range = (row_range[0], self.generator.data_size)
         except:
             print("Enter correct range!")
-          
+            return
+        
         self.generator.import_dataset(self.excel_path.get())
         self.generator.import_template(self.json_template_path.get())
         self.generator.generate_json(g_range=row_range)
@@ -121,7 +126,7 @@ class Panel:
         target_dir = self.export_path.get()
         row_range = None
         
-        if(self.generator.buffer == [] or target_dir == ''):
+        if(self.generator.previews == [] or target_dir == ''):
             return
          
         try:

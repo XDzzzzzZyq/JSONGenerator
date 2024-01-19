@@ -9,7 +9,41 @@ class Options:
         self.number_to_string = False
         self.string_to_number = False
         self.expression: str = None  # e.g. 'str(x)+".png"'
+        
+def parse_links(template, columns: pd.Index):
+    def find_path(json_obj, target_value, current_path=[]):
+        """
+        Recursively find the first path with the given value in a JSON structure.
+        """
+        if isinstance(json_obj, dict):
+            for key, value in json_obj.items():
+                new_path = current_path + [key]
+                if value == target_value:
+                    return new_path
+                result = find_path(value, target_value, new_path)
+                if result:
+                    return result
+        elif isinstance(json_obj, list):
+            for i, value in enumerate(json_obj):
+                new_path = current_path + [i]
+                if value == target_value:
+                    return new_path
+                result = find_path(value, target_value, new_path)
+                if result:
+                    return result
+        return None
 
+    def to_str_path(path: list):
+        if path is None:
+            return None
+        return "$." + ".".join(path)
+
+    links = dict()
+
+    for column in columns:
+        links[column] = find_path(template, column)
+
+    return links
 
 def process_value(value: any):
     if type(value) is str:

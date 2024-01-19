@@ -24,42 +24,6 @@ def read_excel(excel_file_path: str):
     return loaded_excel, loaded_excel.columns, len(loaded_excel)
 
 
-def parse_links(template, columns: pd.Index):
-    def find_path(json_obj, target_value, current_path=[]):
-        """
-        Recursively find the first path with the given value in a JSON structure.
-        """
-        if isinstance(json_obj, dict):
-            for key, value in json_obj.items():
-                new_path = current_path + [key]
-                if value == target_value:
-                    return new_path
-                result = find_path(value, target_value, new_path)
-                if result:
-                    return result
-        elif isinstance(json_obj, list):
-            for i, value in enumerate(json_obj):
-                new_path = current_path + [i]
-                if value == target_value:
-                    return new_path
-                result = find_path(value, target_value, new_path)
-                if result:
-                    return result
-        return None
-
-    def to_str_path(path: list):
-        if path is None:
-            return None
-        return "$." + ".".join(path)
-
-    links = dict()
-
-    for column in columns:
-        links[column] = find_path(template, column)
-
-    return links
-
-
 def update_json(tar, path: list[str], value: any):
     """Update JSON dictionnary PATH with VALUE. Return updated JSON"""
 
@@ -95,9 +59,6 @@ if __name__ == "__main__":
     print(excel_r)
     print(columns)
     print(num)
-
-    links = parse_links(json_r, columns)
-    print(links)
 
     # Write
     write_json(json_r, "../example/result/003.json")

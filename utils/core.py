@@ -1,4 +1,5 @@
 import json
+import copy
 
 import pandas as pd
 # import jsonpath_ng
@@ -7,14 +8,6 @@ import pandas as pd
 import utils.fileIO as IO
 import utils.process as PS
 
-
-class Preference:
-    def __init__(self):
-        self.template_dir: str = None
-        self.dataset_dir: str = None
-        self.export_folder: str = None
-
-
 class JSONGenerator:
     def __init__(self):
         self.template: dict = None
@@ -22,51 +15,39 @@ class JSONGenerator:
         self.data_size: int = -1
         self.data_columns: pd.Index = None
         self.links: dict = None
-        self.preference = Preference()
         self.option_list = dict()
-        self.buffer = []
+        self.previews = []
 
     def import_template(self, template_dir: str):
         self.template = IO.read_json(template_dir)
-        self.preference.template_dir = template_dir
-
-        if self.dataset is not None:
-            self.links = IO.parse_links(self.template, self.data_columns)
 
     def import_dataset(self, excel_dir: str):
         self.dataset, self.data_columns, self.data_size = IO.read_excel(excel_dir)
-        self.preference.dataset_dir = excel_dir
-
-        if self.template is not None:
-            self.links = IO.parse_links(self.template, self.data_columns)
 
         # column-wise data pre-processing
+        self.option_list = dict()
         for column in self.data_columns:
             self.option_list[column] = PS.Options()
 
-        self.buffer = [dict() for _ in range(self.data_size)]
+        self.previews = [dict() for _ in range(self.data_size)]
 
     def generate_json(self, g_range: tuple[int, int] = None):
-
         if g_range is None:
             g_range = (0, self.data_size)
-        elif g_range[0] < 0:
-            g_range = (0, g_range[1])
-        elif g_range[1] > len(self.buffer):
-            g_range = (g_range[0], len(self.buffer))
 
+        self.links = PS.parse_links(self.template, self.data_columns)
         self.dataset = PS.process(self.dataset, self.option_list)
 
         for i in range(*g_range):
             data = self.dataset.iloc[i]
-            raw = self.template.copy()
+            raw = copy.deepcopy(self.template)
 
             for link_name, link in self.links.items():
                 # code = f"{link} = \'{data[link_name]}\'"
                 print(link)
                 raw = IO.update_json(raw, link, data[link_name])
 
-            self.buffer[i] = raw
+            self.previews[i] = raw
 
     def export_json(self, target_dir: str, g_range: tuple[int, int] = None):
 
@@ -75,21 +56,20 @@ class JSONGenerator:
 
         if target_dir[-1] != '/':
             target_dir += '/'
-        self.preference.export_folder = target_dir
 
         for i in range(*g_range):
-            if(self.buffer[i] != {}):
-                IO.write_json(self.buffer[i], f"{target_dir}{i}.json")
+            if(self.previews[i] != {}):
+                IO.write_json(self.previews[i], f"{target_dir}{i}.json")
 
         print(f"total count: {g_range[1] - g_range[0]}")
         print(f"to folder: {target_dir}")
 
     def pick_preview(self, index: int, indent: int = 4) -> str:
-        return str(json.dumps(self.buffer[index], indent=indent))
+        return str(json.dumps(self.previews[index], indent=indent))
 
     def search(self, path: str, value: any) -> int:
         for i in range(self.data_size):
-            if self.buffer[path] is value:
+            if self.previews[path] is value:
                 return i
         return -1
 
