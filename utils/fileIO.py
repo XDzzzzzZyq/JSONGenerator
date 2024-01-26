@@ -3,7 +3,6 @@ import os
 import json
 import numpy as np
 
-
 def read_json(json_file_path: str):
     # Reading JSON file content into a string
     with open(json_file_path, 'r') as json_file:
@@ -41,12 +40,12 @@ def update_json(tar, path: list[str], value: any):
     return tar
 
 
-def write_json(json_obj: dict, json_file_path: str):
-    dir = os.path.dirname(json_file_path)
+def write_json(json_obj: dict, json_output_path: str):
+    dir = os.path.dirname(json_output_path)
     if not os.path.exists(dir):
         os.makedirs(dir)
-
-    with open(json_file_path, 'w') as json_file:
+        
+    with open(json_output_path, 'w') as json_file:
         json.dump(json_obj, json_file, indent=4)
 
 

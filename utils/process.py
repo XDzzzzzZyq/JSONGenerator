@@ -8,7 +8,7 @@ class Options:
         self.remove_ext_name = False
         self.number_to_string = False
         self.string_to_number = False
-        self.expression: str = None  # e.g. 'str(x)+".png"'
+        # self.expression: str = None  # e.g. 'str(x)+".png"'
         
 def parse_links(template, columns: pd.Index):
     def find_path(json_obj, target_value, current_path=[]):
@@ -33,10 +33,10 @@ def parse_links(template, columns: pd.Index):
                     return result
         return None
 
-    def to_str_path(path: list):
-        if path is None:
-            return None
-        return "$." + ".".join(path)
+    # def to_str_path(path: list):
+    #     if path is None:
+    #         return None
+    #     return "$." + ".".join(path)
 
     links = dict()
 
@@ -73,8 +73,8 @@ def process_column(datacol: pd.DataFrame, opt: Options) -> pd.DataFrame:
     if opt.number_to_string:
         datacol = datacol.astype(str)
 
-    if opt.expression is not None:
-        datacol = datacol.apply(lambda x: eval(opt.expression, {'x': x}))
+    # if opt.expression is not None:
+    #     datacol = datacol.apply(lambda x: eval(opt.expression, {'x': x}))
 
     return datacol
 

@@ -155,4 +155,7 @@ cython_debug/
 ~$*
 
 # generated
-example/result/*
+example/results/*
+
+# previous
+UI/UI_old.py

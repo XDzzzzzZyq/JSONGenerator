@@ -29,6 +29,7 @@ class Panel:
             "preview": None,
         }
 
+        self.window.minsize(1200, 720)
         self.create_widgets()
 
     def create_widgets(self):
@@ -327,13 +328,19 @@ class Panel:
         Parameters:
         - entry_widget: The entry widget to display the selected file path.
         - kind: The kind (str) of the path to import.
-        """
-        path = filedialog.askopenfilename()
-        entry_widget.delete(0, tk.END)
-        entry_widget.insert(0, path)
-        
+        """  
         if kind == "Excel Data Path":
             # import Excel
+            path = filedialog.askopenfilename(
+                title="Select An Excel Dataset",
+                filetypes=[("Excel File", "*.xlsx")])
+            
+            if path == "":
+                return
+            
+            entry_widget.delete(0, tk.END)
+            entry_widget.insert(0, path)
+            
             self.generator.import_dataset(self.widgets["path"]["Excel Data Path"].get())
             self.widgets["columns"].delete(0, tk.END)
 
@@ -342,9 +349,24 @@ class Panel:
                 
         elif kind == "Json Template Path":
             # import Json Templates
+            path = filedialog.askopenfilename(
+                title="Select A Json Template",
+                filetypes=[("Json File", "*.json")])
+            
+            if path == "":
+                return
+            
+            entry_widget.delete(0, tk.END)
+            entry_widget.insert(0, path)
+            
             self.generator.import_template(self.widgets["path"]["Json Template Path"].get())
-               
-
+            
+        elif kind == "Export Path":
+            # export
+            path = filedialog.askdirectory()
+            entry_widget.delete(0, tk.END)
+            entry_widget.insert(0, path)
+            
     def run(self):
         """
         Run the main loop of the tkinter window.

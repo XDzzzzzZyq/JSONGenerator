@@ -10,6 +10,7 @@ import utils.process as PS
 
 class JSONGenerator:
     def __init__(self):
+        self.name = ""
         self.template: dict = None
         self.dataset: pd.DataFrame = None
         self.data_size: int = -1
@@ -23,6 +24,7 @@ class JSONGenerator:
 
     def import_dataset(self, excel_dir: str):
         self.dataset, self.data_columns, self.data_size = IO.read_excel(excel_dir)
+        self.name = excel_dir.split("/")[-1].split(".")[0]
 
         # column-wise data pre-processing
         self.option_list = dict()
@@ -54,12 +56,14 @@ class JSONGenerator:
         if g_range is None:
             g_range = (0, self.data_size)
 
-        if target_dir[-1] != '/':
-            target_dir += '/'
-
         for i in range(*g_range):
             if(self.previews[i] != {}):
-                IO.write_json(self.previews[i], f"{target_dir}{i}.json")
+                id = self.previews[i]["identifier"]
+                
+                if id:
+                    IO.write_json(self.previews[i], f"{target_dir}/{self.name}/{id}.json")
+                else:
+                    raise ValueError("No 'identifier' column!")
 
         print(f"total count: {g_range[1] - g_range[0]}")
         print(f"to folder: {target_dir}")
