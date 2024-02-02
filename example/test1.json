@@ -5,7 +5,10 @@
   "field" : "field",
   "subfield" : "subfield",
   "cost" : "cost",
-  "lasting" : "lasting",
+  "lasting" : {
+      "last" : "lasting"
+  },
+  "interval": "range",
   "consequence" : "conseq",
   "disclosureProb" : "discl",
   "address": {

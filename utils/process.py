@@ -1,5 +1,5 @@
-import pandas as pd
 import os
+import copy
 
 
 class Options:
@@ -9,8 +9,69 @@ class Options:
         self.number_to_string = False
         self.string_to_number = False
         # self.expression: str = None  # e.g. 'str(x)+".png"'
+
+def __process_list(list_string: str):
+    ## check if the string is a list
+    if not list_string.startswith("[") or not list_string.endswith("]") :
+        return list_string
+    
+    ## preprocess the string
+    items = list_string.strip('[]').split(',')
+
+    # Process each item
+    for i, item in enumerate(items):
+        if item.startswith('['):
+            items[i] = __process_list(item)
+        else:
+            # convert numeric items to int or float
+            try:
+                items[i] = int(item)
+            except ValueError:
+                try:
+                    items[i] = float(item)
+                except ValueError:
+                    items[i] = item.strip('\'"')
+
+    return items
+
+
+def __process_column(dataset: list[dict], column: str, opt: Options) -> list[dict]:
+    processed_dataset = copy.deepcopy(dataset)
+    
+    for row in range(len(processed_dataset)):
+        ## process list
+        if type(processed_dataset[row][column]) is str:
+            processed_dataset[row][column] = __process_list(processed_dataset[row][column])
         
-def parse_links(template, columns: pd.Index):
+        ## process options
+        if opt.remove_spaces:
+            processed_dataset[row][column] = str(processed_dataset[row][column]).strip()
+
+        if opt.remove_ext_name:
+            processed_dataset[row][column] = os.path.splitext(processed_dataset[row][column])[0]
+
+        if opt.string_to_number:
+            processed_dataset[row][column] = float(processed_dataset[row][column])
+
+        if opt.number_to_string:
+            processed_dataset[row][column] = str(processed_dataset[row][column])
+
+        # if opt.expression is not None:
+        #     processed_dataset[row][column] = eval(processed_dataset[row][column], {'x': x})
+
+    return processed_dataset
+
+
+def process_options(dataset: list[dict], opt_list: dict[str, Options]) -> list[dict]:
+    processed_dataset = copy.deepcopy(dataset)
+    
+    for column, options in opt_list.items():
+        processed_dataset = __process_column(processed_dataset, column, options)
+
+    return processed_dataset
+
+
+def parse_links(template, columns: list):
     def find_path(json_obj, target_value, current_path=[]):
         """
         Recursively find the first path with the given value in a JSON structure.
@@ -44,43 +105,3 @@ def parse_links(template, columns: pd.Index):
         links[column] = find_path(template, column)
 
     return links
-
-def process_value(value: any):
-    if type(value) is str:
-        if value.startswith('[') and value.endswith(']'):  # e.g. [0,100]
-            value_r = value.replace(' ', '').replace(']', '').replace('[', '').split(",")
-            if len(value_r) == 2:
-                value = [float(v) for v in value_r]
-
-        elif value.startswith('l[') and value.endswith(']'):  # e.g. l["123", "asda", "12313"]
-            value = value.replace(' ', '').replace(']', '').replace('l[', '').replace('\"', '').split(",")
-
-    return value
-
-
-def process_column(datacol: pd.DataFrame, opt: Options) -> pd.DataFrame:
-    datacol = datacol.apply(process_value)
-
-    if opt.remove_spaces:
-        datacol = datacol.astype(str).str.strip()
-
-    if opt.remove_ext_name:
-        datacol = datacol.apply(lambda x: os.path.splitext(x)[0])
-
-    if opt.string_to_number:
-        datacol = datacol.astype(float)
-
-    if opt.number_to_string:
-        datacol = datacol.astype(str)
-
-    # if opt.expression is not None:
-    #     datacol = datacol.apply(lambda x: eval(opt.expression, {'x': x}))
-
-    return datacol
-
-
-def process(dataset: pd.DataFrame, opt_list: dict[str, Options]) -> pd.DataFrame:
-    for column, option in opt_list.items():
-        dataset[column] = process_column(dataset[column], option)
-
-    return dataset

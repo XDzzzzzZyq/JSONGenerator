@@ -1,19 +1,20 @@
 {
-  "identifier" : "ide",
-  "name" : "name",
-  "address": {
-     "city": "city",
-     "zipcode": "code"
-     },
-  "range": "range",
-  "list": "list",
-  "complex":[{
-          "A":"A",
-          "B":"B"
+   "identifier" : "ide",
+   "name" : "name",
+   "address": {
+      "city": "city",
+      "zipcode": "code"
       },
-   {
-	"C":"C",
-          "D":"D"
-	}
+   "descr": "descr",
+   "range": "range",
+   "list": "list",
+   "complex":[{
+            "A":"A",
+            "B":"B"
+      },
+      {
+         "C":"C",
+         "D":"D"
+	   }
   ]
 }
