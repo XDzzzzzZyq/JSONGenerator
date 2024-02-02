@@ -1,10 +1,6 @@
 import json
 import copy
 
-import pandas as pd
-# import jsonpath_ng
-# from objectpath import Tree
-
 import utils.fileIO as IO
 import utils.process as PS
 
@@ -12,9 +8,9 @@ class JSONGenerator:
     def __init__(self):
         self.name = ""
         self.template: dict = None
-        self.dataset: pd.DataFrame = None
+        self.dataset: list[dict] = None
         self.data_size: int = -1
-        self.data_columns: pd.Index = None
+        self.data_columns: list = None
         self.links: dict = None
         self.option_list = dict()
         self.previews = []
@@ -38,16 +34,16 @@ class JSONGenerator:
             g_range = (0, self.data_size)
 
         self.links = PS.parse_links(self.template, self.data_columns)
-        self.dataset = PS.process(self.dataset, self.option_list)
+        self.dataset = PS.process_options(self.dataset, self.option_list)
 
         for i in range(*g_range):
-            data = self.dataset.iloc[i]
+            data = self.dataset[i]
             raw = copy.deepcopy(self.template)
 
             for link_name, link in self.links.items():
                 # code = f"{link} = \'{data[link_name]}\'"
                 print(link)
-                raw = IO.update_json(raw, link, data[link_name])
+                raw = IO.update_json_dict(raw, link, data[link_name])
 
             self.previews[i] = raw
 
