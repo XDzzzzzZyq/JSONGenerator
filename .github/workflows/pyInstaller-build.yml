@@ -1,0 +1,31 @@
+name: Build with PyInstaller
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        CONFIG: ["3.10", "3.9"]
+        PLATFORM: ["x86", "x64"]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        conda env update --file environment.yml --name base
+    - name: Build
+      uses: sayyid5416/pyinstaller@v1
+      with: 
+        spec: "main.py"
+        python_arch: ${{matrix.PLATFORM}}
+        python_ver: ${{matrix.CONFIG}}
