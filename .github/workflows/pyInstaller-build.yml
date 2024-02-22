@@ -8,7 +8,7 @@ jobs:
       max-parallel: 5
       matrix:
         CONFIG: ["3.10", "3.9"]
-        PLATFORM: ["x86", "x64"]
+        PLATFORM: ["x64"]
 
     steps:
     - uses: actions/checkout@v4
