@@ -2,6 +2,7 @@ import openpyxl as oxl
 import os
 import json
 
+
 def read_json(json_file_path: str):
     # Reading JSON file content into a string
     with open(json_file_path, 'r') as json_file:
