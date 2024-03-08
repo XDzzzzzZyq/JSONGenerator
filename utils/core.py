@@ -3,9 +3,13 @@ import copy
 
 import utils.fileIO as IO
 import utils.process as PS
+import utils.project as PJ
+
 
 class JSONGenerator:
     def __init__(self):
+        self.task = PJ.Task()
+
         self.name = ""
         self.template: dict = None
         self.dataset: list[dict] = None
@@ -17,6 +21,7 @@ class JSONGenerator:
 
     def import_template(self, template_dir: str):
         self.template = IO.read_json(template_dir)
+        self.task.templ_path = template_dir
 
     def import_dataset(self, excel_dir: str):
         self.dataset, self.data_columns, self.data_size = IO.read_excel(excel_dir)
@@ -28,6 +33,7 @@ class JSONGenerator:
             self.option_list[column] = PS.Options()
 
         self.previews = [dict() for _ in range(self.data_size)]
+        self.task.excel_path = excel_dir
 
     def generate_json(self, g_range: tuple[int, int] = None):
         if g_range is None:
@@ -63,6 +69,7 @@ class JSONGenerator:
 
         print(f"total count: {g_range[1] - g_range[0]}")
         print(f"to folder: {target_dir}")
+        self.task.export_path = target_dir
 
     def pick_preview(self, index: int, indent: int = 4) -> str:
         return str(json.dumps(self.previews[index], indent=indent))
