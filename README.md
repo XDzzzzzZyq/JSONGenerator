@@ -11,7 +11,7 @@ using template to build up the links between Excel and JSON entries
 
 ### Format
 formats of the entries in Excel dataset
-1. string: ```"example"```
+1. string: ```example```
 2. int & float: ```15```, ```1.0```
 3. range: ```[-1,100]```
 4. list: ```[here, is, example]```, ```["here", "is", "example"]```
