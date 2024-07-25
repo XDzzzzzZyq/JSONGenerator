@@ -29,34 +29,45 @@ class Panel:
             "preview": None,
         }
 
-        self.window.minsize(1200, 720)
+        # self.window.minsize(1200, 720)
         self.create_widgets()
 
     def create_widgets(self):
         """
         Create various GUI widgets for the Panel.
         """
+        # Window Layout: LEFT & RIGHT
+        self.window.columnconfigure(0, weight=1)
+        self.window.columnconfigure(1, weight=1)
+
+        # UI Initialization
+        ## MIDDLE
         self.create_title()
+        self.create_write_to_file_button()
+
+        # LEFT
         self.create_scroll_frame()
+        # self.create_transform_button()
+
+        # RIGHT
         self.create_path_frame()
         self.create_interval_frame()
         self.create_options_frame()
-        self.create_transform_button()
-        self.create_write_to_file_button()
 
     def create_title(self):
         """
         Create the title label for the Panel.
         """
         label_title = tk.Label(self.window, text="Json Generator", font=("Arial", 16, "bold italic"), fg="blue")
-        label_title.grid(row=0, column=0, columnspan=3, pady=10)
+        label_title.grid(row=0, column=0, columnspan=2, pady=10)
 
     def create_scroll_frame(self):
         """
         Create the scroll frame containing preview text and buttons.
         """
+        # Frame Layout Settings
         scroll_frame = tk.Frame(self.window)
-        scroll_frame.grid(row=1, column=0, rowspan=6, sticky="nsew", padx=10)
+        scroll_frame.grid(row=1, column=0, rowspan=3, padx=10, sticky="nsew")
 
         scrollbar_title = tk.Label(scroll_frame, text="Preview")
         scrollbar_title.pack(side="top", fill="x")
@@ -72,7 +83,7 @@ class Panel:
         scrollbar_x = tk.Scrollbar(scroll_frame, orient="horizontal")
         scrollbar_x.pack(side="bottom", fill="x")
 
-        preview_text = tk.Text(scroll_frame,width=self.window.winfo_width() * 50, yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+        preview_text = tk.Text(scroll_frame, yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
         preview_text.pack(side="left", fill="both", expand=True)
         preview_text.configure(state="disabled")
 
@@ -84,32 +95,39 @@ class Panel:
     def create_path_frame(self):
         """
         Create the frame for displaying and browsing file paths.
-        """
-        def create_path_entry(self: Panel, parent: tk.Frame, label_text:str, row: int)-> tk.Entry:
-            label_path = tk.Label(parent, text=f"{label_text}:")
+        """    
+        # Window Layout Settings
+        self.window.rowconfigure(1, weight=1)
+
+        # Frame Layout Settings     
+        path_frame = tk.Frame(self.window)
+        path_frame.grid(row=1, column=1, pady=10, sticky="nsew")
+        path_frame.grid_columnconfigure(1, weight=1)
+
+        # Paths
+        for row, label_text in enumerate(self.widgets["path"].keys()):
+            label_path = tk.Label(path_frame, text=f"{label_text}:")
             label_path.grid(row=row, column=0, pady=5, padx=5, sticky="e")
 
-            entry_path = tk.Entry(parent)
+            entry_path = tk.Entry(path_frame)
             entry_path.grid(row=row, column=1, pady=5, padx=5, sticky="ew")
 
-            button_browse = tk.Button(parent, text="Browse", command=lambda: self.browse(entry_path, label_text))
+            button_browse = tk.Button(path_frame, text="Browse", command=lambda: self.browse(entry_path, label_text))
             button_browse.grid(row=row, column=2, pady=5, padx=5)
             
             self.widgets["path"][label_text] = entry_path
-            parent.grid_columnconfigure(1, weight=1)
-            
-        path_frame = tk.Frame(self.window)
-        path_frame.grid(row=1, column=1, pady=10, sticky="nsew")
-
-        for i, path_label in enumerate(self.widgets["path"].keys()):
-            create_path_entry(self, path_frame, path_label, i)
 
     def create_interval_frame(self):
         """
         Create the frame for specifying row intervals and selecting columns.
         """
+        # Window Layout Settings
+        self.window.rowconfigure(2, weight=1)
+
+        # Frame Layout Settings
         interval_frame = tk.Frame(self.window)
         interval_frame.grid(row=2, column=1, pady=10, sticky="nsew")
+        interval_frame.grid_columnconfigure(1, weight=1)
 
         # Start Row
         label_start_row = tk.Label(interval_frame, text="Start Row:")
@@ -139,27 +157,31 @@ class Panel:
         scrollbar_y = tk.Scrollbar(result_frame, orient="vertical")
         scrollbar_y.pack(side="right", fill="y")
 
-        result_listbox = tk.Listbox(result_frame,height=self.window.winfo_height() * 5, yscrollcommand=scrollbar_y.set, selectmode=tk.SINGLE)
+        result_listbox = tk.Listbox(result_frame, yscrollcommand=scrollbar_y.set, selectmode=tk.SINGLE)
         result_listbox.pack(side="left", fill="both", expand=True)
         result_listbox.bind("<<ListboxSelect>>", self.show_options)
 
         self.widgets["columns"] = result_listbox
         scrollbar_y.config(command=result_listbox.yview)
 
-        interval_frame.grid_columnconfigure(1, weight=1)
-
-        self.window.rowconfigure(2, weight=1)
-        interval_frame.grid(row=2, column=1)
-
     def create_options_frame(self):
         """
         Create the frame for displaying and interacting with column options.
         """
-        options_frame = tk.Frame(self.window)
-        options_frame.grid(row=3, column=1, rowspan=5, padx=5, pady=10, sticky="nsew")
+        # Window Layout Settings
+        self.window.rowconfigure(3, weight=1)
 
+        # Frame Layout Settings
+        options_frame = tk.Frame(self.window)
+        options_frame.grid(row=3, column=1, pady=10, sticky="nsew")
+        options_frame.grid_columnconfigure(1, weight=1)
+
+        # Column Options
         options_label = tk.Label(options_frame, text="Column Options:")
-        options_label.grid(row=0, column=0, pady=10, sticky="w", rowspan=1)
+        options_label.grid(row=0, column=0, pady=5, padx=5, sticky="e")
+
+        container_frame = tk.Frame(options_frame)
+        container_frame.grid(row=0, column=1, pady=5, padx=5, sticky="nsew")
 
         opt_names = list(self.widgets["options"].keys())
         pairs = {(0,0): opt_names[0],
@@ -168,27 +190,21 @@ class Panel:
                 (1,1): opt_names[3]}
 
         for i in range(2):
-            options_frame.rowconfigure(i + 1, weight=1)
             for j in range(2):
-                options_frame.columnconfigure(j, weight=1)
-                
-                option_button = tk.Button(options_frame, text=pairs[(i,j)], command=lambda pair=pairs[(i, j)]: self.option_event(pair))
-                option_button.grid(row=i + 1, column=j, pady=5, padx=5, sticky="nsew")
+                option_button = tk.Button(container_frame, text=pairs[(i,j)], command=lambda pair=pairs[(i, j)]: self.option_event(pair))
+                option_button.grid(row=i, column=j, pady=5, padx=5, sticky="nsew")
+
+                container_frame.grid_rowconfigure(i, weight=1)
+                container_frame.grid_columnconfigure(j, weight=1)
                 
                 self.widgets["options"][pairs[(i,j)]] = option_button
-
-        self.window.columnconfigure(0, weight=1)
-        self.window.columnconfigure(1, weight=1)
-        self.window.rowconfigure(1, weight=1)
-        for i in range(6):
-            options_frame.rowconfigure(i + 1, weight=1)
 
     def create_transform_button(self):
         """
         Create the Transform button.
         """
         transform_button_frame = tk.Frame(self.window)
-        transform_button_frame.grid(row=8, column=0, columnspan=3, pady=10)
+        transform_button_frame.grid(row=4, column=0, pady=10)
 
         transform_button = tk.Button(transform_button_frame, text="Transform", command=self.transform_data)
         transform_button.pack(side="left")
@@ -197,8 +213,12 @@ class Panel:
         """
         Create the Write to File button.
         """
+        # Window Layout Settings
+        self.window.grid_rowconfigure(4, weight=1)
+        
+        # Frame Layout Settings
         button_frame = tk.Frame(self.window)
-        button_frame.grid(row=8, column=0, columnspan=3, pady=10)
+        button_frame.grid(row=5, column=0, columnspan=2, pady=10)
 
         write_button = tk.Button(button_frame, text="Write to File", command=self.write_to_file)
         write_button.pack(side="right")
@@ -330,7 +350,7 @@ class Panel:
         - kind: The kind (str) of the path to import.
         """  
         if kind == "Excel Data Path":
-            # import Excel
+            # Excel path
             path = filedialog.askopenfilename(
                 title="Select An Excel Dataset",
                 filetypes=[("Excel File", "*.xlsx")])
@@ -348,7 +368,7 @@ class Panel:
                 self.widgets["columns"].insert(tk.END, col)
                 
         elif kind == "Json Template Path":
-            # import Json Templates
+            # Json Template path
             path = filedialog.askopenfilename(
                 title="Select A Json Template",
                 filetypes=[("Json File", "*.json")])
@@ -362,7 +382,7 @@ class Panel:
             self.generator.import_template(self.widgets["path"]["Json Template Path"].get())
             
         elif kind == "Export Path":
-            # export
+            # export path
             path = filedialog.askdirectory()
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
