@@ -14,7 +14,7 @@ class Panel:
             "path": {
                 "Excel Data Path": None,
                 "Json Template Path": None,
-                "Export Path": None
+                "Export Path": None,
                 },
             "interval": {
                 "start": None,
@@ -24,7 +24,10 @@ class Panel:
                 "Remove Spaces": None,
                 "Remove Extention": None,
                 "String to Number": None,
-                "Number to String": None},
+                "Number to String": None
+                },
+            "decoder": None,
+            "one_file": None,
             "columns": None,
             "preview": None,
         }
@@ -47,7 +50,6 @@ class Panel:
 
         # LEFT
         self.create_scroll_frame()
-        # self.create_transform_button()
 
         # RIGHT
         self.create_path_frame()
@@ -69,20 +71,36 @@ class Panel:
         scroll_frame = tk.Frame(self.window)
         scroll_frame.grid(row=1, column=0, rowspan=3, padx=10, sticky="nsew")
 
+        # Transform Frame
+        transform_frame = tk.Frame(scroll_frame)
+        transform_frame.pack(side="bottom", fill="x")
+        transform_frame.columnconfigure(0, weight=1)
+        transform_frame.columnconfigure(1, weight=1)
+
+        transform_button = tk.Button(transform_frame, text="Transform", command=self.transform_data)
+        transform_button.grid(row=0, column=0, pady=5, padx=5, sticky="e")
+
+        decoder = tk.BooleanVar()
+        decoder.set(True)
+        decode_box = tk.Checkbutton(transform_frame, text="Decode", variable=decoder)
+        decode_box.grid(row=0, column=1, pady=5, padx=5, sticky="w")
+
+        self.widgets["decoder"] = decoder
+
+        # Preview Text
+        ## Title
         scrollbar_title = tk.Label(scroll_frame, text="Preview")
         scrollbar_title.pack(side="top", fill="x")
 
-        transform_button = tk.Button(scroll_frame, text="Transform", command=self.transform_data)
-        transform_button.pack(side="bottom")
-
-        # Vertical Scrollbar
+        ## Vertical Scrollbar
         scrollbar_y = tk.Scrollbar(scroll_frame, orient="vertical")
         scrollbar_y.pack(side="right", fill="y")
 
-        # Horizontal Scrollbar
+        ## Horizontal Scrollbar
         scrollbar_x = tk.Scrollbar(scroll_frame, orient="horizontal")
         scrollbar_x.pack(side="bottom", fill="x")
 
+        ## Text Area
         preview_text = tk.Text(scroll_frame, yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
         preview_text.pack(side="left", fill="both", expand=True)
         preview_text.configure(state="disabled")
@@ -95,7 +113,20 @@ class Panel:
     def create_path_frame(self):
         """
         Create the frame for displaying and browsing file paths.
-        """    
+        """
+        def create_path_entry(self: Panel, parent: tk.Frame, label_text:str, row: int)-> tk.Entry:
+            label_path = tk.Label(parent, text=f"{label_text}:")
+            label_path.grid(row=row, column=0, pady=5, padx=5, sticky="e")
+
+            entry_path = tk.Entry(parent)
+            entry_path.grid(row=row, column=1, pady=5, padx=5, sticky="ew")
+
+            button_browse = tk.Button(parent, text="Browse", command=lambda: self.browse(entry_path, label_text))
+            button_browse.grid(row=row, column=2, pady=5, padx=5)
+            
+            self.widgets["path"][label_text] = entry_path
+
+
         # Window Layout Settings
         self.window.rowconfigure(1, weight=1)
 
@@ -106,16 +137,12 @@ class Panel:
 
         # Paths
         for row, label_text in enumerate(self.widgets["path"].keys()):
-            label_path = tk.Label(path_frame, text=f"{label_text}:")
-            label_path.grid(row=row, column=0, pady=5, padx=5, sticky="e")
+            create_path_entry(self, path_frame, label_text, row)
 
-            entry_path = tk.Entry(path_frame)
-            entry_path.grid(row=row, column=1, pady=5, padx=5, sticky="ew")
+        # Import
+        import_button = tk.Button(path_frame, text="Import", command=self.import_all)
+        import_button.grid(row=3, column=1, columnspan=2, pady=5, padx=5, sticky="ew")
 
-            button_browse = tk.Button(path_frame, text="Browse", command=lambda: self.browse(entry_path, label_text))
-            button_browse.grid(row=row, column=2, pady=5, padx=5)
-            
-            self.widgets["path"][label_text] = entry_path
 
     def create_interval_frame(self):
         """
@@ -128,6 +155,7 @@ class Panel:
         interval_frame = tk.Frame(self.window)
         interval_frame.grid(row=2, column=1, pady=10, sticky="nsew")
         interval_frame.grid_columnconfigure(1, weight=1)
+        interval_frame.grid_columnconfigure(3, weight=1)
 
         # Start Row
         label_start_row = tk.Label(interval_frame, text="Start Row:")
@@ -140,19 +168,19 @@ class Panel:
 
         # End Row
         label_end_row = tk.Label(interval_frame, text="End Row:")
-        label_end_row.grid(row=1, column=0, pady=5, padx=5, sticky="e")
+        label_end_row.grid(row=0, column=2, pady=5, padx=5, sticky="e")
 
         entry_end_row = tk.Entry(interval_frame)
-        entry_end_row.grid(row=1, column=1, pady=5, padx=5, sticky="ew")
+        entry_end_row.grid(row=0, column=3, pady=5, padx=5, sticky="ew")
         
         self.widgets["interval"]["end"] = entry_end_row
         
         # Column Selection
         label_result = tk.Label(interval_frame, text="Select Column:")
-        label_result.grid(row=2, column=0, pady=5, padx=5, sticky="e")
+        label_result.grid(row=1, column=0, pady=5, padx=5, sticky="e")
         
         result_frame = tk.Frame(interval_frame)
-        result_frame.grid(row=2, column=1, pady=5, padx=5, sticky="ew")
+        result_frame.grid(row=1, column=1, columnspan=3, pady=5, padx=5, sticky="ew")
         
         scrollbar_y = tk.Scrollbar(result_frame, orient="vertical")
         scrollbar_y.pack(side="right", fill="y")
@@ -199,16 +227,6 @@ class Panel:
                 
                 self.widgets["options"][pairs[(i,j)]] = option_button
 
-    def create_transform_button(self):
-        """
-        Create the Transform button.
-        """
-        transform_button_frame = tk.Frame(self.window)
-        transform_button_frame.grid(row=4, column=0, pady=10)
-
-        transform_button = tk.Button(transform_button_frame, text="Transform", command=self.transform_data)
-        transform_button.pack(side="left")
-
     def create_write_to_file_button(self):
         """
         Create the Write to File button.
@@ -219,9 +237,18 @@ class Panel:
         # Frame Layout Settings
         button_frame = tk.Frame(self.window)
         button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
 
         write_button = tk.Button(button_frame, text="Write to File", command=self.write_to_file)
-        write_button.pack(side="right")
+        write_button.grid(row=0, column=0, pady=5, padx=5, sticky="e")
+
+        one_file = tk.BooleanVar()
+        one_file.set(False)
+        one_file_box = tk.Checkbutton(button_frame, text="Export One File", variable=one_file)
+        one_file_box.grid(row=0, column=1, pady=5, padx=5, sticky="w")
+
+        self.widgets["one_file"] = one_file
 
     def write_to_file(self):
         """
@@ -247,7 +274,7 @@ class Panel:
         
         row_range = (lower, upper)
         
-        self.generator.export_json(target_dir, g_range=row_range)
+        self.generator.export_json(target_dir, g_range=row_range, one_file=self.widgets["one_file"].get())
         self.widgets["preview"].configure(state="normal")
         self.widgets["preview"].delete("1.0", tk.END)
         self.widgets["preview"].configure(state="disabled")
@@ -273,7 +300,7 @@ class Panel:
         row_range = (lower, upper)
 
         # transform to json
-        self.generator.generate_json(g_range=row_range)
+        self.generator.generate_json(g_range=row_range, decoder=self.widgets["decoder"].get())
         
         self.widgets["preview"].configure(state="normal")
         self.widgets["preview"].delete("1.0", tk.END)
@@ -360,12 +387,6 @@ class Panel:
             
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
-            
-            self.generator.import_dataset(self.widgets["path"]["Excel Data Path"].get())
-            self.widgets["columns"].delete(0, tk.END)
-
-            for col in self.generator.data_columns:
-                self.widgets["columns"].insert(tk.END, col)
                 
         elif kind == "Json Template Path":
             # Json Template path
@@ -379,13 +400,28 @@ class Panel:
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
             
-            self.generator.import_template(self.widgets["path"]["Json Template Path"].get())
-            
         elif kind == "Export Path":
             # export path
             path = filedialog.askdirectory()
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
+    
+    def import_all(self):
+        # Import Excel Data
+        excel_path = self.widgets["path"]["Excel Data Path"].get()
+
+        if excel_path != "":
+            self.generator.import_dataset(excel_path)
+            self.widgets["columns"].delete(0, tk.END)
+
+            for col in self.generator.data_columns:
+                self.widgets["columns"].insert(tk.END, col)
+
+        # Import Json Template
+        json_path = self.widgets["path"]["Json Template Path"].get()
+
+        if json_path != "":
+            self.generator.import_template(json_path)
             
     def run(self):
         """

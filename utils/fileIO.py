@@ -62,13 +62,13 @@ def update_json_dict(target_dict: dict, path: list[str], value: any):
     return target_dict
 
 
-def write_json(json_obj: dict, json_output_path: str):
+def write_json(json_obj: dict | list, json_output_path: str, indent: int = 4, decoder: bool = True):
     dir = os.path.dirname(json_output_path)
     if not os.path.exists(dir):
         os.makedirs(dir)
         
     with open(json_output_path, 'w') as json_file:
-        json.dump(json_obj, json_file, indent=4)
+        json.dump(json_obj, json_file, indent=indent, ensure_ascii=not decoder)
 
 
 if __name__ == "__main__":
