@@ -67,7 +67,7 @@ def write_json(json_obj: dict | list, json_output_path: str, indent: int = 4, de
     if not os.path.exists(dir):
         os.makedirs(dir)
         
-    with open(json_output_path, 'w') as json_file:
+    with open(json_output_path, 'w', encoding="utf-8") as json_file:
         json.dump(json_obj, json_file, indent=indent, ensure_ascii=not decoder)
 
 
