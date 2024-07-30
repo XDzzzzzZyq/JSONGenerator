@@ -30,7 +30,7 @@ def __process_list(list_string: str):
                 try:
                     items[i] = float(item)
                 except ValueError:
-                    items[i] = item.strip('\'"')
+                    items[i] = item.strip('\'" ')
 
     return items
 
@@ -39,13 +39,9 @@ def __process_column(dataset: list[dict], column: str, opt: Options) -> list[dic
     processed_dataset = copy.deepcopy(dataset)
     
     for row in range(len(processed_dataset)):
-        ## process list
-        if type(processed_dataset[row][column]) is str:
-            processed_dataset[row][column] = __process_list(processed_dataset[row][column])
-        
         ## process options
         if opt.remove_spaces:
-            processed_dataset[row][column] = str(processed_dataset[row][column]).strip()
+            processed_dataset[row][column] = str(processed_dataset[row][column]).replace("\t", "").replace(" ", "")
 
         if opt.remove_ext_name:
             processed_dataset[row][column] = os.path.splitext(processed_dataset[row][column])[0]
@@ -59,6 +55,10 @@ def __process_column(dataset: list[dict], column: str, opt: Options) -> list[dic
         # if opt.expression is not None:
         #     processed_dataset[row][column] = eval(processed_dataset[row][column], {'x': x})
 
+        ## process list
+        if type(processed_dataset[row][column]) is str:
+            processed_dataset[row][column] = __process_list(processed_dataset[row][column])
+        
     return processed_dataset
 
 

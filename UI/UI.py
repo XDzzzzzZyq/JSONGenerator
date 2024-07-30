@@ -187,7 +187,7 @@ class Panel:
 
         result_listbox = tk.Listbox(result_frame, yscrollcommand=scrollbar_y.set, selectmode=tk.SINGLE)
         result_listbox.pack(side="left", fill="both", expand=True)
-        result_listbox.bind("<<ListboxSelect>>", self.show_options)
+        result_listbox.bind("<<ListboxSelect>>", self.show_options_color)
 
         self.widgets["columns"] = result_listbox
         scrollbar_y.config(command=result_listbox.yview)
@@ -320,11 +320,12 @@ class Panel:
         Parameters:
         - name (str): Name of the column option.
         """
-        try:
-            options_state = self.generator.option_list[self.widgets["columns"].get(self.widgets["columns"].curselection())]
-        except:
+        selection = self.widgets["columns"].curselection()
+        if selection:
+            options_state = self.generator.option_list[self.widgets["columns"].get(selection)]
+        else:
             return
-        
+
         if name == "Remove Spaces":
             options_state.remove_spaces = not options_state.remove_spaces
         elif name == "Remove Extention":
@@ -336,36 +337,53 @@ class Panel:
             options_state.number_to_string = not options_state.number_to_string
             options_state.string_to_number = False
         
-        self.show_options()  
+        self.show_options_color()  
        
-    def show_options(self, event=None):
+    def show_options_color(self, event=None):
         """
         Show the current state of column options.
         """
-        try:
-            options_state = self.generator.option_list[self.widgets["columns"].get(self.widgets["columns"].curselection())]
-        except:
+        selection = self.widgets["columns"].curselection()     
+        if selection:
+            selected_index = selection[0]
+            options_state = self.generator.option_list[self.widgets["columns"].get(selection)]
+        else:
             return
+        
+        options_count = 0
         
         if options_state.remove_spaces:
             self.widgets["options"]["Remove Spaces"].config(fg="red")
+            options_count += 1
         else:
             self.widgets["options"]["Remove Spaces"].config(fg="black")
             
         if options_state.remove_ext_name:
             self.widgets["options"]["Remove Extention"].config(fg="red")
+            options_count += 1
         else:
             self.widgets["options"]["Remove Extention"].config(fg="black")
             
         if options_state.string_to_number:
             self.widgets["options"]["String to Number"].config(fg="red")
+            options_count += 1
         else:
             self.widgets["options"]["String to Number"].config(fg="black")
             
         if options_state.number_to_string:
             self.widgets["options"]["Number to String"].config(fg="red")
+            options_count += 1
         else:
             self.widgets["options"]["Number to String"].config(fg="black")
+
+        if options_count > 0:
+            self.widgets["columns"].itemconfig(selected_index, {'fg': 'red'})
+        elif self.widgets["columns"].itemcget(selected_index, 'fg') == 'red':
+            col_text = self.widgets["columns"].get(selected_index)
+            self.widgets["columns"].delete(selected_index)
+            self.widgets["columns"].insert(selected_index, col_text)
+            self.widgets["columns"].selection_set(selected_index)
+            self.widgets["columns"].activate(selected_index)
 
 
     def browse(self, entry_widget:tk.Entry, kind: str = ""):
@@ -422,6 +440,10 @@ class Panel:
 
         if json_path != "":
             self.generator.import_template(json_path)
+
+        # Clear Options Color
+        for button in self.widgets["options"].values():
+            button.config(fg="black")
             
     def run(self):
         """
