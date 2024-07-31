@@ -1,9 +1,10 @@
 from utils import *
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog
 
 class Panel:
-    def __init__(self, width:int=1200, height:int=720):
+    def __init__(self, width:int=1440, height:int=720):
         self.width = width
         self.height = height
         self.window = tk.Tk()
@@ -32,7 +33,6 @@ class Panel:
             "preview": None,
         }
 
-        # self.window.minsize(1200, 720)
         self.create_widgets()
 
     def create_widgets(self):
@@ -156,22 +156,35 @@ class Panel:
         interval_frame.grid(row=2, column=1, pady=10, sticky="nsew")
         interval_frame.grid_columnconfigure(1, weight=1)
         interval_frame.grid_columnconfigure(3, weight=1)
+        interval_frame.grid_columnconfigure(5, weight=1)
+        
+        # Sheet Selection
+        label_dropdown = tk.Label(interval_frame, text="Select Sheet:")
+        label_dropdown.grid(row=0, column=0, pady=5, padx=5, sticky="e")
+        
+        select_sheet = ttk.Combobox(interval_frame, state='readonly')
+        select_sheet['values'] = ["None"]
+        select_sheet.set("None")
+        select_sheet.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
+        select_sheet.bind("<<ComboboxSelected>>", self.on_select_sheet)
+        
+        self.widgets["interval"]["sheet"] = select_sheet
 
         # Start Row
         label_start_row = tk.Label(interval_frame, text="Start Row:")
-        label_start_row.grid(row=0, column=0, pady=5, padx=5, sticky="e")
+        label_start_row.grid(row=0, column=2, pady=5, padx=5, sticky="e")
 
         entry_start_row = tk.Entry(interval_frame)
-        entry_start_row.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
+        entry_start_row.grid(row=0, column=3, pady=5, padx=5, sticky="ew")
         
         self.widgets["interval"]["start"] = entry_start_row
 
         # End Row
         label_end_row = tk.Label(interval_frame, text="End Row:")
-        label_end_row.grid(row=0, column=2, pady=5, padx=5, sticky="e")
+        label_end_row.grid(row=0, column=4, pady=5, padx=5, sticky="e")
 
         entry_end_row = tk.Entry(interval_frame)
-        entry_end_row.grid(row=0, column=3, pady=5, padx=5, sticky="ew")
+        entry_end_row.grid(row=0, column=5, pady=5, padx=5, sticky="ew")
         
         self.widgets["interval"]["end"] = entry_end_row
         
@@ -180,14 +193,14 @@ class Panel:
         label_result.grid(row=1, column=0, pady=5, padx=5, sticky="e")
         
         result_frame = tk.Frame(interval_frame)
-        result_frame.grid(row=1, column=1, columnspan=3, pady=5, padx=5, sticky="ew")
+        result_frame.grid(row=1, column=1, columnspan=5, pady=5, padx=5, sticky="ew")
         
         scrollbar_y = tk.Scrollbar(result_frame, orient="vertical")
         scrollbar_y.pack(side="right", fill="y")
 
         result_listbox = tk.Listbox(result_frame, yscrollcommand=scrollbar_y.set, selectmode=tk.SINGLE)
         result_listbox.pack(side="left", fill="both", expand=True)
-        result_listbox.bind("<<ListboxSelect>>", self.show_options_color)
+        result_listbox.bind("<<ListboxSelect>>", self.on_show_options_color)
 
         self.widgets["columns"] = result_listbox
         scrollbar_y.config(command=result_listbox.yview)
@@ -268,13 +281,13 @@ class Panel:
         
         try:
             upper = int(self.widgets["interval"]["end"].get()) - 1
-            upper = min(upper, self.generator.data_size)
+            upper = min(upper, self.generator.data[self.generator.current_sheet]["data_size"])
         except:
-            upper = self.generator.data_size
+            upper = self.generator.data[self.generator.current_sheet]["data_size"]
         
         row_range = (lower, upper)
         
-        self.generator.export_json(target_dir, g_range=row_range, one_file=self.widgets["one_file"].get())
+        self.generator.export_json(target_dir, generate_range=row_range, one_file=self.widgets["one_file"].get())
         self.widgets["preview"].configure(state="normal")
         self.widgets["preview"].delete("1.0", tk.END)
         self.widgets["preview"].configure(state="disabled")
@@ -283,6 +296,10 @@ class Panel:
         """
         Transform data to JSON and display it in the preview area.
         """
+        
+        # get the sheet name
+        sheetname = self.widgets["interval"]["sheet"].get()
+                
         # get row range
         row_range = None
         try:
@@ -293,25 +310,26 @@ class Panel:
         
         try:
             upper = int(self.widgets["interval"]["end"].get()) - 1
-            upper = min(upper, self.generator.data_size)
+            upper = min(upper, self.generator.data[sheetname]["data_size"])
         except:
-            upper = self.generator.data_size
+            upper = self.generator.data[sheetname]["data_size"]
             
         row_range = (lower, upper)
 
-        # transform to json
-        self.generator.generate_json(g_range=row_range, decoder=self.widgets["decoder"].get())
+        # transform to json 
+        self.generator.generate_json(sheetname=sheetname, generate_range=row_range, decoder=self.widgets["decoder"].get())
         
         self.widgets["preview"].configure(state="normal")
         self.widgets["preview"].delete("1.0", tk.END)
         self.widgets["preview"].configure(state="disabled")
         if(row_range == None):
-            row_range = (0, self.generator.data_size)
-            
+            row_range = (0, self.generator.data[sheetname]["data_size"])
+        
+        self.widgets["preview"].configure(state="normal")
+        self.widgets["preview"].insert(tk.END, f"<Sheet: {sheetname}>\n\n")
         for i in range(*row_range):
-            self.widgets["preview"].configure(state="normal")
             self.widgets["preview"].insert(tk.END, f"[Row: {i + 2}]:\n" + self.generator.pick_preview(i) + "\n\n")
-            self.widgets["preview"].configure(state="disabled")
+        self.widgets["preview"].configure(state="disabled")
 
     def option_event(self, name: str):
         """
@@ -320,9 +338,10 @@ class Panel:
         Parameters:
         - name (str): Name of the column option.
         """
+        sheetname = self.widgets["interval"]["sheet"].get()
         selection = self.widgets["columns"].curselection()
         if selection:
-            options_state = self.generator.option_list[self.widgets["columns"].get(selection)]
+            options_state = self.generator.option_list[sheetname][self.widgets["columns"].get(selection)]
         else:
             return
 
@@ -337,16 +356,18 @@ class Panel:
             options_state.number_to_string = not options_state.number_to_string
             options_state.string_to_number = False
         
-        self.show_options_color()  
+        self.on_show_options_color()  
        
-    def show_options_color(self, event=None):
+    def on_show_options_color(self, event=None):
         """
         Show the current state of column options.
         """
+        
+        sheetname = self.widgets["interval"]["sheet"].get()
         selection = self.widgets["columns"].curselection()     
         if selection:
             selected_index = selection[0]
-            options_state = self.generator.option_list[self.widgets["columns"].get(selection)]
+            options_state = self.generator.option_list[sheetname][self.widgets["columns"].get(selection)]
         else:
             return
         
@@ -385,6 +406,27 @@ class Panel:
             self.widgets["columns"].selection_set(selected_index)
             self.widgets["columns"].activate(selected_index)
 
+    def on_select_sheet(self, event=None):
+        """
+        The event happens when selecting the excel sheet.
+        """
+        
+        # Clear Options Color
+        for button in self.widgets["options"].values():
+            button.config(fg="black")
+        
+        # Update Columns
+        sheetname = self.widgets["interval"]["sheet"].get()
+        self.widgets["columns"].delete(0, tk.END)
+        if sheetname != "None":
+            for col in self.generator.data[sheetname]["data_columns"]:
+                self.widgets["columns"].insert(tk.END, col)
+                
+                options_state = self.generator.option_list[sheetname][col]
+                if options_state.remove_spaces or options_state.remove_ext_name or options_state.string_to_number or options_state.number_to_string:
+                    selected_index = self.widgets["columns"].get(0, tk.END).index(col)
+                    self.widgets["columns"].itemconfig(selected_index, {'fg': 'red'})
+                
 
     def browse(self, entry_widget:tk.Entry, kind: str = ""):
         """
@@ -425,15 +467,16 @@ class Panel:
             entry_widget.insert(0, path)
     
     def import_all(self):
+        """
+        Imports Json template and Excel source
+        """
+        
         # Import Excel Data
         excel_path = self.widgets["path"]["Excel Data Path"].get()
 
         if excel_path != "":
             self.generator.import_dataset(excel_path)
-            self.widgets["columns"].delete(0, tk.END)
-
-            for col in self.generator.data_columns:
-                self.widgets["columns"].insert(tk.END, col)
+            self.widgets["interval"]["sheet"]['values'] = ["None"] + list(self.generator.data.keys())
 
         # Import Json Template
         json_path = self.widgets["path"]["Json Template Path"].get()

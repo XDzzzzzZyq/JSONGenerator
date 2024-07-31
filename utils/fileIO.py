@@ -17,25 +17,33 @@ def read_json(json_file_path: str):
     return loaded_data
 
 
-def read_excel(excel_file_path: str):
+def read_excel(excel_file_path: str) -> dict:
     wb = oxl.load_workbook(excel_file_path)
-    sheet = wb['Sheet1']
-    loaded_excel = []
-    for row in sheet.iter_rows(min_row=1, max_row=sheet.max_row, min_col=1, max_col=sheet.max_column, values_only=True):
-        loaded_excel.append(list(row))
+    sheet_content = {}
+    for sheetname in wb.sheetnames:
+        sheet = wb[sheetname]
+        loaded_excel = []
+        for row in sheet.iter_rows(min_row=1, max_row=sheet.max_row, min_col=1, max_col=sheet.max_column, values_only=True):
+            loaded_excel.append(list(row))
 
-    loaded_columns = []
-    loaded_dataset = [{} for _ in range(len(loaded_excel) - 1)]
+        loaded_columns = []
+        loaded_dataset = [{} for _ in range(len(loaded_excel) - 1)]
 
-    for col in range(len(loaded_excel[0])):
-        if loaded_excel[0][col] is None:
-            continue
-        
-        loaded_columns.append(loaded_excel[0][col])
-        for row in range(len(loaded_excel) - 1):
-            loaded_dataset[row][loaded_excel[0][col]] = loaded_excel[row + 1][col]
-        
-    return loaded_dataset, loaded_columns, len(loaded_dataset)
+        for col in range(len(loaded_excel[0])):
+            if loaded_excel[0][col] is None:
+                continue
+            
+            loaded_columns.append(loaded_excel[0][col])
+            for row in range(len(loaded_excel) - 1):
+                loaded_dataset[row][loaded_excel[0][col]] = loaded_excel[row + 1][col]
+            
+        sheet_content[sheetname] = {
+            "dataset": loaded_dataset,
+            "data_columns": loaded_columns,
+            "data_size": len(loaded_dataset)
+        }
+    
+    return sheet_content
 
 
 def update_json_dict(target_dict: dict, path: list[str], value: any):
