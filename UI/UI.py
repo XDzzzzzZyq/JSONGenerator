@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkinter import filedialog
 
 class Panel:
-    def __init__(self, width:int=1440, height:int=720):
+    def __init__(self, width:int=900, height:int=720):
         self.width = width
         self.height = height
         self.window = tk.Tk()
