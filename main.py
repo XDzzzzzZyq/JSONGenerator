@@ -1,4 +1,4 @@
-from UI.UI import Panel
+from UI import Panel
 
 
 def main():

@@ -4,6 +4,11 @@ import json
 
 
 def read_json(json_file_path: str):
+    # Check if the file exists and is not empty
+    if not os.path.isfile(json_file_path) or os.path.getsize(json_file_path) == 0:
+        print(f"The file {json_file_path} does not exist or is empty.")
+        return {}
+    
     # Reading JSON file content into a string
     with open(json_file_path, 'r') as json_file:
         json_string = json_file.read()
@@ -18,6 +23,11 @@ def read_json(json_file_path: str):
 
 
 def read_excel(excel_file_path: str) -> dict:
+    # Check if the file exists and is not empty
+    if not os.path.isfile(excel_file_path) or os.path.getsize(excel_file_path) == 0:
+        print(f"The file {excel_file_path} does not exist or is empty.")
+        return {}
+    
     wb = oxl.load_workbook(excel_file_path)
     sheet_content = {}
     for sheetname in wb.sheetnames:

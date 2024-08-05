@@ -1,31 +1,47 @@
-from utils import *
+import copy
 import tkinter as tk
-from tkinter import ttk
+
+from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import ttk
+
+from utils import JSONGenerator as JSG
+from utils import Task
 
 class Panel:
-    def __init__(self, width:int=900, height:int=720):
-        self.width = width
-        self.height = height
+    def __init__(self, width:int=1000, height:int=720):     
+        self.task = Task()
+        self.generator = JSG()    
         self.window = tk.Tk()
+        
+         # Window Layout: LEFT & RIGHT
+        self.window.geometry(f"{width}x{height}")
         self.window.title("Json Generator")
-        self.window.geometry(f"{self.width}x{self.height}")
-        self.generator = JSONGenerator() 
+        self.window.columnconfigure(0, weight=1)
+        self.window.columnconfigure(1, weight=1)
+        
+        # Window Events
+        self.window.bind_all("<Control-s>", self.save_config)
+        self.window.bind_all("<Command-s>", self.save_config)
+        self.window.protocol("WM_SAVE_YOURSELF", self.save_config)
+        self.window.protocol("WM_DELETE_WINDOW", self.close)
+        
         self.widgets = {
+            "save": None,
             "path": {
-                "Excel Data Path": None,
-                "Json Template Path": None,
-                "Export Path": None,
+                "excel_path": None,
+                "templ_path": None,
+                "export_path": None,
                 },
             "interval": {
                 "start": None,
                 "end": None,
                 }, 
             "options": {
-                "Remove Spaces": None,
-                "Remove Extention": None,
-                "String to Number": None,
-                "Number to String": None
+                "remove_spaces": None,
+                "remove_ext": None,
+                "str_to_num": None,
+                "num_to_str": None
                 },
             "decoder": None,
             "one_file": None,
@@ -34,34 +50,46 @@ class Panel:
         }
 
         self.create_widgets()
+        self.load_config()
 
     def create_widgets(self):
         """
         Create various GUI widgets for the Panel.
         """
-        # Window Layout: LEFT & RIGHT
-        self.window.columnconfigure(0, weight=1)
-        self.window.columnconfigure(1, weight=1)
-
         # UI Initialization
         ## MIDDLE
-        self.create_title()
+        self.create_title_frame()
         self.create_write_to_file_button()
 
-        # LEFT
+        ## LEFT
         self.create_scroll_frame()
 
-        # RIGHT
+        ## RIGHT
         self.create_path_frame()
         self.create_interval_frame()
         self.create_options_frame()
 
-    def create_title(self):
+    def create_title_frame(self):
         """
         Create the title label for the Panel.
         """
-        label_title = tk.Label(self.window, text="Json Generator", font=("Arial", 16, "bold italic"), fg="blue")
-        label_title.grid(row=0, column=0, columnspan=2, pady=10)
+        # Frame Layout Settings
+        title_frame = tk.Frame(self.window)
+        title_frame.grid(row=0, column=0, columnspan=2, pady=10, sticky='ew')
+        title_frame.columnconfigure(0, weight=1)
+        title_frame.columnconfigure(1, weight=1)
+        title_frame.columnconfigure(2, weight=1)
+
+        # Save Icon Button
+        save_icon = tk.Label(title_frame, text="💾", font=("Arial", 16), fg="#00CC00")
+        save_icon.grid(row=0, column=0, pady=5, padx=5, sticky="w")
+        save_icon.bind("<Button-1>", self.save_config)
+        
+        self.widgets["save"] = save_icon
+        
+        # Title Label
+        label_title = tk.Label(title_frame, text="Json Generator", font=("Arial", 16, "bold italic"), fg="blue")
+        label_title.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
 
     def create_scroll_frame(self):
         """
@@ -82,7 +110,7 @@ class Panel:
 
         decoder = tk.BooleanVar()
         decoder.set(True)
-        decode_box = tk.Checkbutton(transform_frame, text="Decode", variable=decoder)
+        decode_box = tk.Checkbutton(transform_frame, text="Decode", variable=decoder, command=lambda: self.set_config("enable_decoder", decoder))
         decode_box.grid(row=0, column=1, pady=5, padx=5, sticky="w")
 
         self.widgets["decoder"] = decoder
@@ -120,6 +148,7 @@ class Panel:
 
             entry_path = tk.Entry(parent)
             entry_path.grid(row=row, column=1, pady=5, padx=5, sticky="ew")
+            entry_path.bind("<KeyRelease>", lambda event: self.set_config(label_text, entry_path))
 
             button_browse = tk.Button(parent, text="Browse", command=lambda: self.browse(entry_path, label_text))
             button_browse.grid(row=row, column=2, pady=5, padx=5)
@@ -166,7 +195,7 @@ class Panel:
         select_sheet['values'] = ["None"]
         select_sheet.set("None")
         select_sheet.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
-        select_sheet.bind("<<ComboboxSelected>>", self.on_select_sheet)
+        select_sheet.bind("<<ComboboxSelected>>", self.select_sheet)
         
         self.widgets["interval"]["sheet"] = select_sheet
 
@@ -175,6 +204,7 @@ class Panel:
         label_start_row.grid(row=0, column=2, pady=5, padx=5, sticky="e")
 
         entry_start_row = tk.Entry(interval_frame)
+        entry_start_row.bind("<KeyRelease>", lambda event: self.set_config("start_row", entry_start_row))
         entry_start_row.grid(row=0, column=3, pady=5, padx=5, sticky="ew")
         
         self.widgets["interval"]["start"] = entry_start_row
@@ -184,6 +214,7 @@ class Panel:
         label_end_row.grid(row=0, column=4, pady=5, padx=5, sticky="e")
 
         entry_end_row = tk.Entry(interval_frame)
+        entry_end_row.bind("<KeyRelease>", lambda event: self.set_config("end_row", entry_end_row))
         entry_end_row.grid(row=0, column=5, pady=5, padx=5, sticky="ew")
         
         self.widgets["interval"]["end"] = entry_end_row
@@ -200,7 +231,7 @@ class Panel:
 
         result_listbox = tk.Listbox(result_frame, yscrollcommand=scrollbar_y.set, selectmode=tk.SINGLE)
         result_listbox.pack(side="left", fill="both", expand=True)
-        result_listbox.bind("<<ListboxSelect>>", self.on_show_options_color)
+        result_listbox.bind("<<ListboxSelect>>", self.color_options)
 
         self.widgets["columns"] = result_listbox
         scrollbar_y.config(command=result_listbox.yview)
@@ -224,21 +255,27 @@ class Panel:
         container_frame = tk.Frame(options_frame)
         container_frame.grid(row=0, column=1, pady=5, padx=5, sticky="nsew")
 
-        opt_names = list(self.widgets["options"].keys())
-        pairs = {(0,0): opt_names[0],
-                (0,1): opt_names[1],
-                (1,0): opt_names[2],
-                (1,1): opt_names[3]}
+        opt_names = ["Remove Spaces", "Remove Extension", "String to Number", "Number to String"]
+        names = {(0,0): opt_names[0],
+                 (0,1): opt_names[1],
+                 (1,0): opt_names[2],
+                 (1,1): opt_names[3]}
+        
+        opt_keys = list(self.widgets["options"].keys())     
+        keys = {(0,0): opt_keys[0],
+                (0,1): opt_keys[1],
+                (1,0): opt_keys[2],
+                (1,1): opt_keys[3]}
 
         for i in range(2):
             for j in range(2):
-                option_button = tk.Button(container_frame, text=pairs[(i,j)], command=lambda pair=pairs[(i, j)]: self.option_event(pair))
+                option_button = tk.Button(container_frame, text=names[(i,j)], command=lambda key=keys[(i, j)]: self.toggle_option(key))
                 option_button.grid(row=i, column=j, pady=5, padx=5, sticky="nsew")
 
                 container_frame.grid_rowconfigure(i, weight=1)
                 container_frame.grid_columnconfigure(j, weight=1)
                 
-                self.widgets["options"][pairs[(i,j)]] = option_button
+                self.widgets["options"][keys[(i,j)]] = option_button
 
     def create_write_to_file_button(self):
         """
@@ -258,7 +295,7 @@ class Panel:
 
         one_file = tk.BooleanVar()
         one_file.set(False)
-        one_file_box = tk.Checkbutton(button_frame, text="Export One File", variable=one_file)
+        one_file_box = tk.Checkbutton(button_frame, text="Export One File", variable=one_file, command=lambda: self.set_config("export_one_file", one_file))
         one_file_box.grid(row=0, column=1, pady=5, padx=5, sticky="w")
 
         self.widgets["one_file"] = one_file
@@ -267,7 +304,7 @@ class Panel:
         """
         Write generated JSON data to a file.
         """
-        target_dir = self.widgets["path"]["Export Path"].get()
+        target_dir = self.widgets["path"]["export_path"].get()
         row_range = None
         
         if(self.generator.previews == [] or target_dir == ''):
@@ -328,10 +365,12 @@ class Panel:
         self.widgets["preview"].configure(state="normal")
         self.widgets["preview"].insert(tk.END, f"<Sheet: {sheetname}>\n\n")
         for i in range(*row_range):
-            self.widgets["preview"].insert(tk.END, f"[Row: {i + 2}]:\n" + self.generator.pick_preview(i) + "\n\n")
+            preview = self.generator.pick_preview(i)
+            if preview != '{}':
+                self.widgets["preview"].insert(tk.END, f"[Row: {i + 2}]:\n" + preview + "\n\n")
         self.widgets["preview"].configure(state="disabled")
 
-    def option_event(self, name: str):
+    def toggle_option(self, widget_key: str):
         """
         Handle events related to column options.
 
@@ -341,24 +380,48 @@ class Panel:
         sheetname = self.widgets["interval"]["sheet"].get()
         selection = self.widgets["columns"].curselection()
         if selection:
-            options_state = self.generator.option_list[sheetname][self.widgets["columns"].get(selection)]
+            column = self.widgets["columns"].get(selection)
+            options_state = self.generator.option_list[sheetname][column]
         else:
             return
 
-        if name == "Remove Spaces":
-            options_state.remove_spaces = not options_state.remove_spaces
-        elif name == "Remove Extention":
+        if widget_key == "remove_spaces":
+            options_state.remove_spaces = not options_state.remove_spaces          
+        elif widget_key == "remove_ext":
             options_state.remove_ext_name = not options_state.remove_ext_name
-        elif name == "String to Number":
+        elif widget_key == "str_to_num":
             options_state.string_to_number = not options_state.string_to_number
             options_state.number_to_string = False
-        elif name == "Number to String":
+        elif widget_key == "num_to_str":
             options_state.number_to_string = not options_state.number_to_string
             options_state.string_to_number = False
+            
+        options = {}
+        for sheet in self.generator.option_list.keys():
+            sheet_options = {}
+            for col in self.generator.option_list[sheet].keys():
+                opt = self.generator.option_list[sheet][col]
+                col_options = {}
+                
+                if opt.remove_spaces:
+                    col_options["remove_spaces"] = True
+                if opt.remove_ext_name:
+                    col_options["remove_ext"] = True
+                if opt.string_to_number:
+                    col_options["str_to_num"] = True
+                if opt.number_to_string:
+                    col_options["num_to_str"] = True
+                
+                if col_options:
+                    sheet_options[col] = col_options
+            
+            if sheet_options:
+                options[sheet] = sheet_options
         
-        self.on_show_options_color()  
+        self.set_config("options", copy.deepcopy(options), is_widget=False)     
+        self.color_options()  
        
-    def on_show_options_color(self, event=None):
+    def color_options(self, event=None):
         """
         Show the current state of column options.
         """
@@ -374,28 +437,28 @@ class Panel:
         options_count = 0
         
         if options_state.remove_spaces:
-            self.widgets["options"]["Remove Spaces"].config(fg="red")
+            self.widgets["options"]["remove_spaces"].config(fg="red")
             options_count += 1
         else:
-            self.widgets["options"]["Remove Spaces"].config(fg="black")
+            self.widgets["options"]["remove_spaces"].config(fg="black")
             
         if options_state.remove_ext_name:
-            self.widgets["options"]["Remove Extention"].config(fg="red")
+            self.widgets["options"]["remove_ext"].config(fg="red")
             options_count += 1
         else:
-            self.widgets["options"]["Remove Extention"].config(fg="black")
+            self.widgets["options"]["remove_ext"].config(fg="black")
             
         if options_state.string_to_number:
-            self.widgets["options"]["String to Number"].config(fg="red")
+            self.widgets["options"]["str_to_num"].config(fg="red")
             options_count += 1
         else:
-            self.widgets["options"]["String to Number"].config(fg="black")
+            self.widgets["options"]["str_to_num"].config(fg="black")
             
         if options_state.number_to_string:
-            self.widgets["options"]["Number to String"].config(fg="red")
+            self.widgets["options"]["num_to_str"].config(fg="red")
             options_count += 1
         else:
-            self.widgets["options"]["Number to String"].config(fg="black")
+            self.widgets["options"]["num_to_str"].config(fg="black")
 
         if options_count > 0:
             self.widgets["columns"].itemconfig(selected_index, {'fg': 'red'})
@@ -406,7 +469,7 @@ class Panel:
             self.widgets["columns"].selection_set(selected_index)
             self.widgets["columns"].activate(selected_index)
 
-    def on_select_sheet(self, event=None):
+    def select_sheet(self, event=None):
         """
         The event happens when selecting the excel sheet.
         """
@@ -414,6 +477,11 @@ class Panel:
         # Clear Options Color
         for button in self.widgets["options"].values():
             button.config(fg="black")
+        
+        # Upload Project Task
+        self.set_config("select_sheet", self.widgets["interval"]["sheet"])
+        if (self.widgets["interval"]["sheet"].get() == "None"):
+            self.set_config("options", {}, is_widget=False)
         
         # Update Columns
         sheetname = self.widgets["interval"]["sheet"].get()
@@ -425,8 +493,7 @@ class Panel:
                 options_state = self.generator.option_list[sheetname][col]
                 if options_state.remove_spaces or options_state.remove_ext_name or options_state.string_to_number or options_state.number_to_string:
                     selected_index = self.widgets["columns"].get(0, tk.END).index(col)
-                    self.widgets["columns"].itemconfig(selected_index, {'fg': 'red'})
-                
+                    self.widgets["columns"].itemconfig(selected_index, {'fg': 'red'})               
 
     def browse(self, entry_widget:tk.Entry, kind: str = ""):
         """
@@ -436,7 +503,7 @@ class Panel:
         - entry_widget: The entry widget to display the selected file path.
         - kind: The kind (str) of the path to import.
         """  
-        if kind == "Excel Data Path":
+        if kind == "excel_path":
             # Excel path
             path = filedialog.askopenfilename(
                 title="Select An Excel Dataset",
@@ -447,9 +514,11 @@ class Panel:
             
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
+            
+            self.set_config("excel_path", self.widgets["path"]["excel_path"])
                 
-        elif kind == "Json Template Path":
-            # Json Template path
+        elif kind == "templ_path":
+            # templ_path
             path = filedialog.askopenfilename(
                 title="Select A Json Template",
                 filetypes=[("Json File", "*.json")])
@@ -460,11 +529,20 @@ class Panel:
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
             
-        elif kind == "Export Path":
+            self.set_config("templ_path", self.widgets["path"]["templ_path"])
+            
+        elif kind == "export_path":
             # export path
-            path = filedialog.askdirectory()
+            path = filedialog.askdirectory(
+                title="Select Export File")
+            
+            if path == "":
+                return
+            
             entry_widget.delete(0, tk.END)
             entry_widget.insert(0, path)
+            
+            self.set_config("export_path", self.widgets["path"]["export_path"])
     
     def import_all(self):
         """
@@ -472,14 +550,17 @@ class Panel:
         """
         
         # Import Excel Data
-        excel_path = self.widgets["path"]["Excel Data Path"].get()
+        excel_path = self.widgets["path"]["excel_path"].get()
 
         if excel_path != "":
             self.generator.import_dataset(excel_path)
-            self.widgets["interval"]["sheet"]['values'] = ["None"] + list(self.generator.data.keys())
+            sheetnames = list(self.generator.data.keys())
+            self.widgets["interval"]["sheet"]['values'] = ["None"] + sheetnames
+            self.widgets["interval"]["sheet"].set(sheetnames[0])
+            self.select_sheet()
 
         # Import Json Template
-        json_path = self.widgets["path"]["Json Template Path"].get()
+        json_path = self.widgets["path"]["templ_path"].get()
 
         if json_path != "":
             self.generator.import_template(json_path)
@@ -487,6 +568,136 @@ class Panel:
         # Clear Options Color
         for button in self.widgets["options"].values():
             button.config(fg="black")
+            
+    def save_config(self, event=None):
+        """
+        Save the current state of the panel.
+        """
+        self.task.write_config()
+        self.widgets["save"].config(fg="#00CC00")
+    
+    ### TODO: Maybe move this into another new python file ###
+    def load_config(self):
+        """
+        Load the last saved state of the panel.
+        """
+        config = self.task.read_config()
+        imported = False
+        
+        # Paths
+        if "excel_path" in config:
+            self.widgets["path"]["excel_path"].delete(0, tk.END)
+            self.widgets["path"]["excel_path"].insert(0, config["excel_path"])
+        else:
+            self.set_config("excel_path", self.widgets["path"]["excel_path"])
+            
+        if "templ_path" in config:
+            self.widgets["path"]["templ_path"].delete(0, tk.END)
+            self.widgets["path"]["templ_path"].insert(0, config["templ_path"])
+        else:
+            self.set_config("templ_path", self.widgets["path"]["templ_path"])
+            
+        if "export_path" in config:
+            self.widgets["path"]["export_path"].delete(0, tk.END)
+            self.widgets["path"]["export_path"].insert(0, config["export_path"])
+        else:
+            self.set_config("export_path", self.widgets["path"]["export_path"])
+            
+        # Interval
+        if "start_row" in config:
+            self.widgets["interval"]["start"].delete(0, tk.END)
+            self.widgets["interval"]["start"].insert(0, config["start_row"])
+        else:
+            self.set_config("start_row", self.widgets["interval"]["start"])
+        
+        if "end_row" in config:
+            self.widgets["interval"]["end"].delete(0, tk.END)
+            self.widgets["interval"]["end"].insert(0, config["end_row"])
+        else:
+            self.set_config("end_row", self.widgets["interval"]["end"])
+            
+        if "select_sheet" in config:
+            if config["select_sheet"] != "None":
+                try:
+                    self.import_all()
+                except:
+                    print("Cannot imported sheet from the last saved state.")
+                    self.generator.clear_imports()
+                finally:
+                    imported = True
+                    self.widgets["interval"]["sheet"].set(config["select_sheet"])
+        else:
+            self.set_config("select_sheet", self.widgets["interval"]["sheet"])
+            
+        # Column Options
+        if imported and "options" in config:
+                try:
+                    options = config["options"]
+                    for sheet in options.keys():
+                        for col in options[sheet].keys():
+                            opt = self.generator.option_list[sheet][col]  
+                            
+                            if "remove_spaces" in options[sheet][col] and options[sheet][col]["remove_spaces"]:   
+                                opt.remove_spaces = True
+                            if "remove_ext" in options[sheet][col] and options[sheet][col]["remove_ext"]:
+                                opt.remove_ext_name = True
+                            if "str_to_num" in options[sheet][col] and options[sheet][col]["str_to_num"]:
+                                opt.string_to_number = True
+                            if "num_to_str" in options[sheet][col] and options[sheet][col]["num_to_str"]:
+                                opt.number_to_string = True
+                                
+                    self.select_sheet()
+                except:
+                    print("Cannot load options from the last saved state.")
+                    self.generator.clear_imports()
+                    self.widgets["interval"]["sheet"]['values'] = ["None"]
+                    self.widgets["interval"]["sheet"].set("None")
+        else:
+            self.set_config("options", {}, is_widget=False)
+    
+        
+        # CheckBoxes
+        if "enable_decoder" in config:
+            self.widgets["decoder"].set(config["enable_decoder"])
+        else:
+            self.set_config("enable_decoder", self.widgets["decoder"])
+            
+        if "export_one_file" in config:
+            self.widgets["one_file"].set(config["export_one_file"])
+        else:
+            self.set_config("export_one_file", self.widgets["one_file"])
+            
+        # Save Default Values
+        if (config == {}):
+            self.save_config()
+            
+    
+    def set_config(self, name:str, obj: any, is_widget = True):
+        """
+        Set the configuration to the project task.
+        """
+        # Set Save Icon Color
+        if is_widget:
+            self.task.register(name, obj.get())
+        else:
+            self.task.register(name, obj)
+        
+        if (self.task.is_saved()):
+            self.widgets["save"].config(fg="#00CC00")
+        else:
+            self.widgets["save"].config(fg="red")
+
+        
+    def close(self):
+        """
+        Handle the closing event of the window.
+        """
+        if not self.task.is_saved():
+            if not messagebox.askyesno("Save", "Do you want to save the current configuration?"):
+                self.window.destroy()
+                return
+            self.save_config()
+        self.window.destroy()
             
     def run(self):
         """

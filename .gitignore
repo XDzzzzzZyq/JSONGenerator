@@ -159,7 +159,5 @@ cython_debug/
 ~$*
 
 # generated
+config.jsg
 example/results/*
-
-# test
-testIO.py
