@@ -47,9 +47,9 @@ class Task():
         self.__is_saved = current_state == self.__original_state
         
         # DEBUG: Print current state and original state
-        print(f"current state: {current_state}")
-        print(f"original state: {self.__original_state}")
-        print(f"the same?: {self.__is_saved}")
+        # print(f"current state: {current_state}")
+        # print(f"original state: {self.__original_state}")
+        # print(f"the same?: {self.__is_saved}")
     
     def register(self, name: str, obj):
         prop = register_property(name)
