@@ -58,7 +58,7 @@ class Panel:
         """
         # UI Initialization
         ## MIDDLE
-        self.create_title_frame()
+        self.create_tools_frame()
         self.create_write_to_file_button()
 
         ## LEFT
@@ -69,27 +69,29 @@ class Panel:
         self.create_interval_frame()
         self.create_options_frame()
 
-    def create_title_frame(self):
+    def create_tools_frame(self):
         """
-        Create the title label for the Panel.
+        Create the title label and tools for the Panel.
         """
         # Frame Layout Settings
         title_frame = tk.Frame(self.window)
-        title_frame.grid(row=0, column=0, columnspan=2, pady=10, sticky='ew')
+        title_frame.grid(row=0, column=0, columnspan=2, pady=5, sticky='ew')
         title_frame.columnconfigure(0, weight=1)
-        title_frame.columnconfigure(1, weight=1)
-        title_frame.columnconfigure(2, weight=1)
+        
+        # Title Label
+        label_title = tk.Label(title_frame, text="Json Generator", font=("Arial", 16, "bold"), fg="#ADCCFF")
+        label_title.grid(row=0, column=0, pady=0, padx=5, sticky="ew")
+
+        # Tools Frame
+        tools_frame = tk.Frame(title_frame)
+        tools_frame.grid(row=1, column=0, pady=0, padx=5, sticky="ew")
 
         # Save Icon Button
-        save_icon = tk.Label(title_frame, text="💾", font=("Arial", 16), fg="#00CC00")
-        save_icon.grid(row=0, column=0, pady=5, padx=5, sticky="w")
+        save_icon = tk.Label(tools_frame, text="💾  ", font=("Arial", 16, "bold"), fg="#00CC00")
+        save_icon.grid(row=0, column=0, pady=0, padx=5, sticky="w")
         save_icon.bind("<Button-1>", self.save_config)
         
         self.widgets["save"] = save_icon
-        
-        # Title Label
-        label_title = tk.Label(title_frame, text="Json Generator", font=("Arial", 16, "bold italic"), fg="blue")
-        label_title.grid(row=0, column=1, pady=5, padx=5, sticky="ew")
 
     def create_scroll_frame(self):
         """
@@ -142,8 +144,14 @@ class Panel:
         """
         Create the frame for displaying and browsing file paths.
         """
+        label_names = {
+            "excel_path": "Excel Path",
+            "templ_path": "Template Path",
+            "export_path": "Export Path",
+        }
+
         def create_path_entry(self: Panel, parent: tk.Frame, label_text:str, row: int)-> tk.Entry:
-            label_path = tk.Label(parent, text=f"{label_text}:")
+            label_path = tk.Label(parent, text=f"{label_names[label_text]}:")
             label_path.grid(row=row, column=0, pady=5, padx=5, sticky="e")
 
             entry_path = tk.Entry(parent)
@@ -574,7 +582,7 @@ class Panel:
         Save the current state of the panel.
         """
         self.task.write_config()
-        self.widgets["save"].config(fg="#00CC00")
+        self.widgets["save"].config(text="💾  ", fg="#00CC00")
     
     ### TODO: Maybe move this into another new python file ###
     def load_config(self):
@@ -683,9 +691,9 @@ class Panel:
             self.task.register(name, obj)
         
         if (self.task.is_saved()):
-            self.widgets["save"].config(fg="#00CC00")
+            self.widgets["save"].config(text="💾  ", fg="#00CC00")
         else:
-            self.widgets["save"].config(fg="red")
+            self.widgets["save"].config(text="💾 !", fg="red")
 
         
     def close(self):
