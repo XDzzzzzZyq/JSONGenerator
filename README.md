@@ -7,7 +7,7 @@
 ### -  Usage
 Using template to build up the links between Excel and JSON entries
 
-- Excel column names → match template → JSON path
+- Excel column names → JSON match template → JSON path
 
 ### - Format
 Formats of the entries in Excel dataset
