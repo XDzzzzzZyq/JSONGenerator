@@ -10,7 +10,7 @@ def read_json(json_file_path: str):
         return {}
     
     # Reading JSON file content into a string
-    with open(json_file_path, 'r') as json_file:
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
         json_string = json_file.read()
 
     json_string = json_string.replace(":,", ": null,")

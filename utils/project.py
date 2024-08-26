@@ -62,6 +62,9 @@ class Task():
         else:
             self.__config_path = path   
 
+        # DEBUG: Print the path of the config file
+        # print(f"Reading config from {path}")
+        
         json_obj = IO.read_json(path)
         import_properties(self, json_obj)
         
