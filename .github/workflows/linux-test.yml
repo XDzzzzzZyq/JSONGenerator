@@ -30,6 +30,11 @@ jobs:
         spec: "main.py"
         python_arch: ${{matrix.PLATFORM}}
         python_ver: ${{matrix.CONFIG}}
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: application
+        path: ./dist
 
   # Unit Test
   test:
