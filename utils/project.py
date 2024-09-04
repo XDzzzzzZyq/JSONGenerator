@@ -1,4 +1,5 @@
 import os
+import copy
 import utils.fileIO as IO
 
 _registered_properties = []
@@ -47,9 +48,9 @@ class Task():
         self.__is_saved = current_state == self.__original_state
         
         # DEBUG: Print current state and original state
-        # print(f"current state: {current_state}")
-        # print(f"original state: {self.__original_state}")
-        # print(f"the same?: {self.__is_saved}")
+        print(f"current state: {current_state}")
+        print(f"original state: {self.__original_state}")
+        print(f"the same?: {self.__is_saved}")
     
     def register(self, name: str, obj):
         prop = register_property(name)
@@ -72,6 +73,9 @@ class Task():
 
     def write_config(self):
         json_obj = export_properties(self)
+
+        if not self.__is_saved:
+            self.__original_state = copy.deepcopy(json_obj)
 
         path = os.path.realpath(self.__config_path)
         self.__is_saved = True
