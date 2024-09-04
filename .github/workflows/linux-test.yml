@@ -28,14 +28,9 @@ jobs:
       uses: sayyid5416/pyinstaller@v1
       with: 
         spec: "main.py"
+        upload_exe_with_name: application-${{matrix.CONFIG}}
         python_arch: ${{matrix.PLATFORM}}
         python_ver: ${{matrix.CONFIG}}
-    - name: Upload
-      uses: actions/upload-artifact@v4
-      with:
-        name: application-${{matrix.CONFIG}}
-        path: ./dist
-        overwrite: true
 
   # Unit Test
   test:
