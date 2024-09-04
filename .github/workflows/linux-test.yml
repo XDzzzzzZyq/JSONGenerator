@@ -33,8 +33,9 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: application
+        name: application-${{matrix.CONFIG}}
         path: ./dist
+        overwrite: true
 
   # Unit Test
   test:
