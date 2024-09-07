@@ -21,6 +21,7 @@ class Panel:
         self.window.columnconfigure(1, weight=1)
         
         # Window Events
+        # self.window.bind_all("<<Drop>>", self.drop)
         self.window.bind_all("<Control-s>", self.save_config)
         self.window.bind_all("<Command-s>", self.save_config)
         self.window.protocol("WM_SAVE_YOURSELF", self.save_config)
@@ -695,17 +696,24 @@ class Panel:
         else:
             self.widgets["save"].config(text="💾 !", fg="red")
 
-        
+
     def close(self):
         """
         Handle the closing event of the window.
         """
         if not self.task.is_saved():
-            if not messagebox.askyesno("Save", "Do you want to save the current configuration?"):
-                self.window.destroy()
+            result = messagebox.askyesnocancel("Save", "Do you want to save the current configuration?")
+            if result is None:  # Cancel
                 return
-            self.save_config()
+            elif result:  # Yes
+                self.save_config()
         self.window.destroy()
+
+    def drop(self):
+        """
+        Drop the file of the panel.
+        """
+        print("DROP!")
             
     def run(self):
         """

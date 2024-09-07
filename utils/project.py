@@ -76,9 +76,9 @@ class Task():
 
         if not self.__is_saved:
             self.__original_state = copy.deepcopy(json_obj)
+            self.__is_saved = True
 
         path = os.path.realpath(self.__config_path)
-        self.__is_saved = True
         IO.write_json(json_obj, path)
         
     def is_saved(self):
